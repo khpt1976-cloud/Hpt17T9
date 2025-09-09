@@ -1,6 +1,19 @@
-# DuanHpt9t9 + Botpress V12 Integration
+# 🚀 DuanHpt9t9 + Botpress V12 Integration
 
-Tích hợp hoàn chỉnh giữa hệ thống quản lý xây dựng DuanHpt9t9 (Next.js) và nền tảng chatbot Botpress V12 qua Docker.
+<div align="center">
+
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![Botpress](https://img.shields.io/badge/Botpress-1A73E8?style=for-the-badge&logo=botpress&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+
+**Tích hợp hoàn chỉnh giữa hệ thống quản lý xây dựng DuanHpt9t9 (Next.js) và nền tảng chatbot Botpress V12 qua Docker**
+
+[🌟 Demo](#-truy-cập-hệ-thống) • [📖 Documentation](#-cấu-hình) • [🚀 Quick Start](#-khởi-động-nhanh-portable-deployment) • [🤝 Contributing](#-hỗ-trợ)
+
+</div>
+
+---
 
 ## 🚀 Khởi động nhanh (Portable Deployment)
 
@@ -167,4 +180,28 @@ MIT License - Xem file LICENSE để biết thêm chi tiết.
 
 ---
 
-**Portable Deployment** - Chỉ cần 1 lệnh `./start.sh` để khởi động toàn bộ hệ thống! 🚀
+---
+
+## 🎯 **Tính năng nổi bật**
+
+- ✅ **Portable Deployment** - Chỉ 1 lệnh `./start.sh` khởi động toàn bộ hệ thống
+- ✅ **Seamless Integration** - AdminBot menu tích hợp trực tiếp trong DuanHpt9t9
+- ✅ **Docker Orchestration** - Multi-stage builds với networking tối ưu
+- ✅ **Production Ready** - Security, performance và monitoring
+- ✅ **Real-time Status** - Kiểm tra trạng thái Botpress real-time
+- ✅ **Cross-platform** - Chạy trên Linux, macOS, Windows
+
+## 🌟 **Screenshots**
+
+### DuanHpt9t9 Construction Management
+![DuanHpt9t9 Dashboard](https://via.placeholder.com/800x400/1f2937/ffffff?text=DuanHpt9t9+Dashboard)
+
+### AdminBot Integration
+![AdminBot Interface](https://via.placeholder.com/800x400/3b82f6/ffffff?text=AdminBot+Integration)
+
+### Botpress V12 Chatbot
+![Botpress Interface](https://via.placeholder.com/800x400/10b981/ffffff?text=Botpress+V12+Interface)
+
+---
+
+**🚀 Portable Deployment** - Chỉ cần 1 lệnh `./start.sh` để khởi động toàn bộ hệ thống!
