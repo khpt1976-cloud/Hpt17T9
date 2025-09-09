@@ -9,6 +9,8 @@
 
 **Tích hợp hoàn chỉnh giữa hệ thống quản lý xây dựng DuanHpt9t9 (Next.js) và nền tảng chatbot Botpress V12 qua Docker**
 
+🔗 **Repository chính**: https://github.com/khpt1976-cloud/Hpt10T9
+
 [🌟 Demo](#-truy-cập-hệ-thống) • [📖 Documentation](#-cấu-hình) • [🚀 Quick Start](#-khởi-động-nhanh-portable-deployment) • [🤝 Contributing](#-hỗ-trợ)
 
 </div>
@@ -19,8 +21,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/khpt1976-cloud/DuanHpt9t9.git
-cd DuanHpt9t9
+git clone https://github.com/khpt1976-cloud/Hpt10T9.git
+cd Hpt10T9
 
 # Khởi động toàn bộ hệ thống với 1 lệnh
 ./start.sh

@@ -11,7 +11,7 @@
 
 ## 🔗 **THÔNG TIN REPOSITORY**
 
-- **GitHub URL**: https://github.com/khpt1976-cloud/DuanHpt9t9-Botpress-Integration
+- **GitHub URL**: https://github.com/khpt1976-cloud/Hpt10T9
 - **Tác giả**: khpt1976-cloud
 - **Loại**: Public Repository
 - **Công nghệ**: Docker, Next.js, Node.js, TypeScript
@@ -85,16 +85,16 @@ mkdir -p ~/projects
 cd ~/projects
 
 # Clone repository
-git clone https://github.com/khpt1976-cloud/DuanHpt9t9-Botpress-Integration.git
+git clone https://github.com/khpt1976-cloud/Hpt10T9.git
 
 # Di chuyển vào thư mục dự án
-cd DuanHpt9t9-Botpress-Integration
+cd Hpt10T9
 ```
 
 #### **Cách 2: Clone qua SSH (nếu có SSH key)**
 ```bash
-git clone git@github.com:khpt1976-cloud/DuanHpt9t9-Botpress-Integration.git
-cd DuanHpt9t9-Botpress-Integration
+git clone git@github.com:khpt1976-cloud/Hpt10T9.git
+cd Hpt10T9
 ```
 
 ### ✅ **Kiểm tra clone thành công:**
@@ -509,7 +509,7 @@ docker-compose up -d
 ## 📞 **HỖ TRỢ VÀ LIÊN HỆ**
 
 ### 🐛 **Báo lỗi:**
-- **GitHub Issues**: https://github.com/khpt1976-cloud/DuanHpt9t9-Botpress-Integration/issues
+- **GitHub Issues**: https://github.com/khpt1976-cloud/Hpt10T9/issues
 
 ### 📚 **Tài liệu tham khảo:**
 - **README.md**: Tổng quan dự án
@@ -562,4 +562,4 @@ Bạn đã cài đặt thành công **DuanHpt9t9 + Botpress V12 Integration**!
 ---
 
 **📝 Tài liệu được cập nhật: 09/09/2025**  
-**🔗 Repository: https://github.com/khpt1976-cloud/DuanHpt9t9-Botpress-Integration**
+**🔗 Repository: https://github.com/khpt1976-cloud/Hpt10T9**
