@@ -1,0 +1,168 @@
+/* Print Styles for Construction Report */
+
+@media print {
+  /* Reset page margins and setup A4 */
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+
+  /* Hide non-printable elements */
+  .no-print,
+  .sidebar,
+  .toolbar,
+  .pagination,
+  button,
+  .hover\:scale-105,
+  .hover\:border-blue-700,
+  .hover\:shadow-lg {
+    display: none !important;
+  }
+
+  /* Ensure images are visible in print */
+  img {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    max-width: 100% !important;
+    height: auto !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    background: white !important;
+  }
+
+  /* Image grid container - fit to A4 page */
+  .image-grid-container {
+    width: 100% !important;
+    max-width: 170mm !important; /* A4 width minus margins */
+    margin: 0 auto !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Image slots - optimize for print */
+  .image-slot {
+    width: 78mm !important; /* For 2 columns with margins */
+    height: 58mm !important;
+    margin: 1mm !important;
+    border: 1px solid #333 !important;
+    page-break-inside: avoid !important;
+    background: white !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 2x2 grid layout for print */
+  .image-grid-2x2 {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 2mm !important;
+    width: 100% !important;
+    max-width: 160mm !important;
+    margin: 0 auto !important;
+    justify-content: center !important;
+  }
+
+  /* Image inside slot */
+  .image-slot img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    border-radius: 2px !important;
+  }
+
+  /* Text elements */
+  .print-title {
+    font-size: 16pt !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    margin-bottom: 10mm !important;
+    color: #000 !important;
+  }
+
+  .print-subtitle {
+    font-size: 12pt !important;
+    text-align: center !important;
+    margin-bottom: 8mm !important;
+    color: #333 !important;
+  }
+
+  .print-footer {
+    font-size: 10pt !important;
+    text-align: center !important;
+    margin-top: 8mm !important;
+    color: #666 !important;
+    border-top: 1px solid #ccc !important;
+    padding-top: 4mm !important;
+  }
+
+  /* Ensure page breaks */
+  .page-break {
+    page-break-before: always !important;
+  }
+
+  /* Hide interactive elements */
+  .absolute,
+  .cursor-pointer,
+  .transition-all,
+  .hover\:border-blue-700,
+  .hover\:scale-105,
+  .hover\:shadow-lg {
+    position: static !important;
+    cursor: default !important;
+    transition: none !important;
+  }
+
+  /* Remove hover states */
+  *:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    border-color: inherit !important;
+  }
+
+  /* Ensure backgrounds print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force image visibility */
+  img[src] {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+  }
+
+  /* Remove borders from empty slots when printing */
+  .image-slot:not(:has(img)) {
+    border: 1px dashed #ccc !important;
+    background: #f9f9f9 !important;
+  }
+
+  /* Placeholder text for empty slots */
+  .image-slot:not(:has(img))::after {
+    content: "Chưa có ảnh" !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 100% !important;
+    color: #999 !important;
+    font-size: 10pt !important;
+  }
+}
+
+/* Print-specific classes */
+.print-only {
+  display: none;
+}
+
+@media print {
+  .print-only {
+    display: block !important;
+  }
+  
+  .screen-only {
+    display: none !important;
+  }
+}

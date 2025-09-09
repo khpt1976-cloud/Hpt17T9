@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  # DuanHpt9t9 - Construction Management System
+  duan_hpt:
+    build:
+      context: ./DuanHpt9t9
+      dockerfile: Dockerfile
+    container_name: duan_hpt_container
+    ports:
+      - "12000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=file:./prisma/dev.db
+      - NEXTAUTH_URL=http://localhost:12000
+      - NEXTAUTH_SECRET=your-secret-key-here
+      - BOTPRESS_URL=http://botpress:3000
+      - BOTPRESS_EXTERNAL_URL=http://localhost:12001
+    volumes:
+      - duan_hpt_data:/app/prisma
+    networks:
+      - app_network
+    depends_on:
+      - botpress
+    restart: unless-stopped
+
+  # Botpress V12 - Chatbot Platform
+  botpress:
+    build:
+      context: ./BotpressV12
+      dockerfile: Dockerfile
+    container_name: botpress_container
+    ports:
+      - "12001:3000"
+    environment:
+      - NODE_ENV=production
+      - BP_HOST=0.0.0.0
+      - PORT=3000
+      - EXTERNAL_URL=http://localhost:12001
+      - DUAN_HPT_URL=http://duan_hpt:3000
+      - BP_PRODUCTION=true
+      - CLUSTER_ENABLED=false
+    volumes:
+      - botpress_data:/botpress/data
+      - botpress_config:/botpress/config
+    networks:
+      - app_network
+    restart: unless-stopped
+
+# Docker volumes for data persistence
+volumes:
+  botpress_data:
+    driver: local
+  botpress_config:
+    driver: local
+  duan_hpt_data:
+    driver: local
+
+# Docker network for inter-service communication
+networks:
+  app_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

@@ -1,0 +1,193 @@
+/* 
+ * UNIFIED CSS for Construction Report Layout
+ * Used for: Web Display, PDF Export, PNG Export
+ * This ensures consistent layout across all formats
+ */
+
+.construction-report-page {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 297mm !important;
+  margin: 0 !important;
+  padding: 25mm 20mm !important;
+  background-color: transparent !important;
+  box-sizing: border-box !important;
+  font-family: Helvetica, Arial, sans-serif !important;
+  font-size: 12pt !important;
+  line-height: 1.5 !important;
+  color: #000000 !important;
+}
+
+.construction-report-page .image-grid-container {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 297mm !important;
+  margin: 0 !important;
+  padding: 25mm 20mm !important;
+  background-color: transparent !important;
+  box-sizing: border-box !important;
+  font-family: Helvetica, Arial, sans-serif !important;
+  font-size: 12pt !important;
+  line-height: 1.5 !important;
+}
+
+.construction-report-page .image-slot {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 1 !important;
+  /* FORCE PERFECT SQUARES FOR ALL SLOTS */
+  width: 70mm !important;
+  height: 70mm !important;
+  min-width: 70mm !important;
+  min-height: 70mm !important;
+  max-width: 70mm !important;
+  max-height: 70mm !important;
+  flex-shrink: 0 !important;
+  flex-grow: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.construction-report-page .image-slot img {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: 70mm !important;
+  height: 70mm !important;
+  min-width: 70mm !important;
+  min-height: 70mm !important;
+  max-width: 70mm !important;
+  max-height: 70mm !important;
+  object-fit: cover !important;
+  border-radius: 4px !important;
+  print-color-adjust: exact !important;
+  -webkit-print-color-adjust: exact !important;
+  color-adjust: exact !important;
+  pointer-events: none !important; /* Let parent handle clicks */
+}
+
+.construction-report-page .print-title {
+  color: #1d4ed8 !important;
+  font-size: 18pt !important;
+  font-weight: bold !important;
+  text-align: center !important;
+  margin-bottom: 8pt !important;
+}
+
+.construction-report-page .print-subtitle {
+  color: #374151 !important;
+  font-size: 14pt !important;
+  font-weight: 600 !important;
+  text-align: center !important;
+  margin-bottom: 12pt !important;
+}
+
+.construction-report-page .print-footer {
+  color: #6b7280 !important;
+  font-size: 10pt !important;
+  text-align: center !important;
+  margin-top: 16pt !important;
+  padding-top: 8pt !important;
+  border-top: 1px solid #d1d5db !important;
+}
+
+/* Hide screen-only elements in print/export */
+.construction-report-page .screen-only {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* SQUARE GRID - EXACTLY LIKE WEB DISPLAY */
+.construction-report-page .image-grid-2x2 {
+  display: grid !important;
+  grid-template-columns: 70mm 70mm !important;
+  grid-template-rows: 70mm 70mm !important;
+  gap: 5mm !important;
+  margin: 0 auto !important;
+  width: 145mm !important;
+  height: 145mm !important;
+  justify-content: center !important;
+  align-items: center !important;
+  justify-items: center !important;
+  align-content: center !important;
+}
+
+/* FORCE ALL GRID ITEMS TO BE PERFECT SQUARES */
+.construction-report-page .image-grid-2x2 > * {
+  width: 70mm !important;
+  height: 70mm !important;
+  min-width: 70mm !important;
+  min-height: 70mm !important;
+  max-width: 70mm !important;
+  max-height: 70mm !important;
+}
+
+/* FORCE PERFECT SQUARES FOR PDF EXPORT CLASSES */
+.professional-image {
+  width: 70mm !important;
+  height: 70mm !important;
+  min-width: 70mm !important;
+  min-height: 70mm !important;
+  max-width: 70mm !important;
+  max-height: 70mm !important;
+  object-fit: cover !important;
+  border-radius: 6px !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.image-frame {
+  width: 70mm !important;
+  height: auto !important;
+  min-width: 70mm !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+  background-color: #f8fafc !important;
+  display: block !important;
+}
+
+.image-grid-professional {
+  display: grid !important;
+  grid-template-columns: repeat(2, 70mm) !important;
+  grid-template-rows: repeat(2, auto) !important;
+  gap: 5mm !important;
+  margin: 0 auto !important;
+  width: 145mm !important;
+  justify-content: center !important;
+  align-items: start !important;
+}
+
+.image-grid-professional .image-frame {
+  width: 70mm !important;
+  height: auto !important;
+  min-width: 70mm !important;
+}
+
+.image-grid-professional .professional-image {
+  width: 70mm !important;
+  height: 70mm !important;
+  min-width: 70mm !important;
+  min-height: 70mm !important;
+  max-width: 70mm !important;
+  max-height: 70mm !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* Force visibility for all images during export */
+@media print, screen {
+  .construction-report-page img {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    max-width: 100% !important;
+    height: auto !important;
+  }
+}
