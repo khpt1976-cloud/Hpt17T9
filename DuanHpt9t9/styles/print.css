@@ -1,14 +1,24 @@
 /* Print Styles for Construction Report */
 
 @media print {
-  /* Reset page margins and setup A4 */
+  /* Reset page margins and setup A4 - WYSIWYG */
   @page {
     size: A4;
     margin: 15mm;
+    /* FORCE BỎ TẤT CẢ header/footer tự động */
+    @top-left { content: none !important; }
+    @top-center { content: none !important; }
+    @top-right { content: none !important; }
+    @bottom-left { content: none !important; }
+    @bottom-center { content: none !important; }
+    @bottom-right { content: none !important; }
+    /* Bỏ page counter */
+    counter-increment: none !important;
   }
 
   /* Hide non-printable elements */
   .no-print,
+  .screen-only,
   .sidebar,
   .toolbar,
   .pagination,
@@ -17,6 +27,7 @@
   .hover\:border-blue-700,
   .hover\:shadow-lg {
     display: none !important;
+    visibility: hidden !important;
   }
 
   /* Ensure images are visible in print */
@@ -66,34 +77,58 @@
     border-radius: 2px !important;
   }
 
-  /* Text elements */
+  /* Text elements - FORCE WYSIWYG */
   .print-title {
     font-size: 16pt !important;
     font-weight: bold !important;
     text-align: center !important;
     margin-bottom: 10mm !important;
-    color: #000 !important;
+    color: #1d4ed8 !important; /* Blue color like web */
   }
 
   .print-subtitle {
     font-size: 12pt !important;
     text-align: center !important;
     margin-bottom: 8mm !important;
-    color: #333 !important;
+    color: #374151 !important; /* Gray color like web */
   }
 
   .print-footer {
-    font-size: 10pt !important;
-    text-align: center !important;
-    margin-top: 8mm !important;
-    color: #666 !important;
-    border-top: 1px solid #ccc !important;
-    padding-top: 4mm !important;
+    display: none !important; /* BỎ HOÀN TOÀN footer */
+    visibility: hidden !important;
+  }
+  
+  /* BỎ TẤT CẢ page numbers và counters */
+  .page-number,
+  .page-counter,
+  [class*="page-"] {
+    display: none !important;
+    visibility: hidden !important;
   }
 
-  /* Ensure page breaks */
+  /* Control page breaks - ONLY when explicitly requested */
   .page-break {
     page-break-before: always !important;
+  }
+  
+  /* Prevent unwanted page breaks */
+  .construction-report-page {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
+  }
+  
+  /* Prevent automatic page breaks on content */
+  * {
+    page-break-inside: auto !important;
+  }
+  
+  /* Only break between pages when explicitly set */
+  .image-grid-container,
+  .print-title,
+  .print-subtitle {
+    page-break-inside: avoid !important;
+    page-break-before: auto !important;
+    page-break-after: auto !important;
   }
 
   /* Hide interactive elements */
@@ -121,6 +156,28 @@
     color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+  
+  /* BỎ TẤT CẢ browser-generated content */
+  html::before,
+  html::after,
+  body::before,
+  body::after {
+    content: none !important;
+    display: none !important;
+  }
+  
+  /* Force clean page */
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    font-family: Arial, sans-serif !important;
+  }
+  
+  /* Hide URL and browser info */
+  @page {
+    margin: 15mm !important;
+  }
 
   /* Force image visibility */
   img[src] {
@@ -135,15 +192,10 @@
     background: #f9f9f9 !important;
   }
 
-  /* Placeholder text for empty slots */
+  /* Placeholder text for empty slots - DISABLED to prevent extra content in PDF */
   .image-slot:not(:has(img))::after {
-    content: "Chưa có ảnh" !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    height: 100% !important;
-    color: #999 !important;
-    font-size: 10pt !important;
+    content: "" !important; /* Bỏ text để tránh trang PDF thừa */
+    display: none !important; /* Ẩn hoàn toàn */
   }
 }
 

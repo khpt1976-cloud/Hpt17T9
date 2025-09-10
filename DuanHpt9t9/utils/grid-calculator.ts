@@ -33,9 +33,9 @@ const A4_CONSTANTS = {
   PAPER_WIDTH: 210,       // mm
   PAPER_HEIGHT: 297,      // mm
   
-  // Available area for images (4/5 of page height, with margins)
+  // Available area for images (TĂNG CHIỀU CAO ĐỂ CÓ THÊM KHÔNG GIAN)
   AVAILABLE_WIDTH: 180,   // mm (210 - 30 margin) - conservative
-  AVAILABLE_HEIGHT: 238,  // mm (4/5 of 297mm = 237.6mm) - CHÍNH XÁC 4/5 TRANG
+  AVAILABLE_HEIGHT: 220,  // mm (GIẢM ĐỂ ĐẢM BẢO KHUNG VUÔNG VỪA VẶN)
   
   // Header area (1/5 of page height)
   HEADER_HEIGHT: 59,      // mm (297 * 1/5)
@@ -111,22 +111,23 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
   const calculatedCellWidth = Math.floor(availableWidthForCells / imagesPerRow)
   const calculatedCellHeight = Math.floor(availableHeightForCells / rows)
   
+  // 🔥 FORCE SQUARE CELLS - Lấy kích thước nhỏ nhất để đảm bảo hình vuông
+  const calculatedSquareSize = Math.min(calculatedCellWidth, calculatedCellHeight)
+  
   // STRICT: Cell size PHẢI fit trong available area - không được vượt quá
-  let finalCellWidth = calculatedCellWidth
-  let finalCellHeight = calculatedCellHeight
+  let finalCellSize = calculatedSquareSize
   
   // Apply minimum size constraint (nhưng vẫn ưu tiên fit trong trang)
-  if (finalCellWidth < A4_CONSTANTS.MIN_CELL_SIZE) {
-    result.warnings.push(`⚠️ Khung ảnh rất nhỏ (${finalCellWidth}mm chiều rộng). Khuyến nghị giảm số khung/hàng.`)
-  }
-  
-  if (finalCellHeight < A4_CONSTANTS.MIN_CELL_SIZE) {
-    result.warnings.push(`⚠️ Khung ảnh rất thấp (${finalCellHeight}mm chiều cao). Khuyến nghị giảm số ảnh.`)
+  if (finalCellSize < A4_CONSTANTS.MIN_CELL_SIZE) {
+    result.warnings.push(`⚠️ Khung ảnh rất nhỏ (${finalCellSize}mm). Khuyến nghị giảm số khung/hàng hoặc số ảnh.`)
   }
   
   // Apply maximum size constraint (để tránh khung quá lớn khi ít ảnh)
-  finalCellWidth = Math.min(A4_CONSTANTS.MAX_CELL_SIZE, finalCellWidth)
-  finalCellHeight = Math.min(A4_CONSTANTS.MAX_CELL_SIZE, finalCellHeight)
+  finalCellSize = Math.min(A4_CONSTANTS.MAX_CELL_SIZE, finalCellSize)
+  
+  // 🔥 ENSURE PERFECT SQUARES - Cả width và height đều bằng nhau
+  let finalCellWidth = finalCellSize
+  let finalCellHeight = finalCellSize
   
   // Đã xử lý warnings ở trên - xóa duplicate code
   

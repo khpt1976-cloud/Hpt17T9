@@ -288,10 +288,17 @@ div[style*="z-index"][style*="red"] {
     page-break-before: always;
   }
   
-  /* A4 page sizing with proper margins */
+  /* A4 page sizing with proper margins - WYSIWYG */
   @page {
     size: A4;
     margin: 15mm;
+    /* Loại bỏ header/footer tự động để đảm bảo WYSIWYG */
+    @top-left { content: none; }
+    @top-center { content: none; }
+    @top-right { content: none; }
+    @bottom-left { content: none; }
+    @bottom-center { content: none; }
+    @bottom-right { content: none; }
   }
   
   body {

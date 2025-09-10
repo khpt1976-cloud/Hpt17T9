@@ -11,6 +11,10 @@ interface ImageGridEditorProps {
   images: (string | null)[]
   onImageChange: (slotIndex: number, imageData: string) => void
   readonly?: boolean
+  // Thêm props để có thể chỉnh sửa text
+  mainTitle?: string
+  subTitle?: string
+  onTitleChange?: (mainTitle: string, subTitle: string) => void
 }
 
 export default function ImageGridEditor({
@@ -19,11 +23,20 @@ export default function ImageGridEditor({
   imagesPerRow,
   images,
   onImageChange,
-  readonly = false
+  readonly = false,
+  mainTitle = "Nhật ký thi công",
+  subTitle = "Hình ảnh thi công",
+  onTitleChange
 }: ImageGridEditorProps) {
   const { toast } = useToast()
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const [loadingSlots, setLoadingSlots] = useState<Set<number>>(new Set())
+  
+  // State để quản lý việc chỉnh sửa text
+  const [editableMainTitle, setEditableMainTitle] = useState(mainTitle)
+  const [editableSubTitle, setEditableSubTitle] = useState(subTitle)
+  const [isEditingMain, setIsEditingMain] = useState(false)
+  const [isEditingSub, setIsEditingSub] = useState(false)
 
   // Sử dụng hàm tính toán thông minh
   const gridCalculation = calculateGridLayout({
@@ -46,6 +59,41 @@ export default function ImageGridEditor({
   const gapSize = 5 // mm
   const availableWidth = 180 // mm - conservative
   const availableHeight = 200 // mm - conservative
+
+  // Hàm xử lý việc chỉnh sửa text
+  const handleMainTitleSave = () => {
+    setIsEditingMain(false)
+    if (onTitleChange) {
+      onTitleChange(editableMainTitle, editableSubTitle)
+    }
+  }
+
+  const handleSubTitleSave = () => {
+    setIsEditingSub(false)
+    if (onTitleChange) {
+      onTitleChange(editableMainTitle, editableSubTitle)
+    }
+  }
+
+  const handleMainTitleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleMainTitleSave()
+    }
+    if (e.key === 'Escape') {
+      setEditableMainTitle(mainTitle)
+      setIsEditingMain(false)
+    }
+  }
+
+  const handleSubTitleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSubTitleSave()
+    }
+    if (e.key === 'Escape') {
+      setEditableSubTitle(subTitle)
+      setIsEditingSub(false)
+    }
+  }
 
   const handleImageSlotClick = async (slotIndex: number) => {
     console.log(`🖼️ Image slot ${slotIndex} clicked on page ${pageNumber}, readonly: ${readonly}`)
@@ -276,23 +324,58 @@ export default function ImageGridEditor({
       boxSizing: 'border-box',
       overflow: 'hidden' // QUAN TRỌNG: Ngăn tràn trang
     }}>
-      {/* Header Section - CHÍNH XÁC 1/5 of page height (59.4mm) */}
+      {/* Header Section - GIẢM CHIỀU CAO ĐỂ TĂNG KHOẢNG CÁCH CHO KHUNG ẢNH */}
       <div className="text-center" style={{ 
-        height: '59.4mm', 
+        height: '45mm', 
         display: 'flex', 
         flexDirection: 'column', 
         justifyContent: 'center',
-        padding: '5mm 10mm',
+        padding: '10mm 10mm 5mm 10mm',
         boxSizing: 'border-box'
       }}>
-        <h2 className="text-xl font-bold text-blue-700 mb-2 print-title">Báo cáo thi công</h2>
-        <p className="text-gray-600 text-sm mb-2 print-subtitle">Trang {pageNumber}</p>
-        <h3 className="text-lg font-semibold text-gray-800 mb-2 print-subtitle">Hình ảnh thi công</h3>
-        
-        {/* Grid calculation info */}
-        <p className="text-gray-500 text-xs print-footer">
-          {imagesPerPage} ảnh ({imagesPerRow} ảnh/hàng) - {rows} hàng - Khung: {finalCellWidth}×{finalCellHeight}mm
-        </p>
+        {/* Main Title - Có thể chỉnh sửa */}
+        {isEditingMain && !readonly ? (
+          <input
+            type="text"
+            value={editableMainTitle}
+            onChange={(e) => setEditableMainTitle(e.target.value)}
+            onBlur={handleMainTitleSave}
+            onKeyDown={handleMainTitleKeyPress}
+            className="text-xl font-bold text-blue-700 mb-4 print-title bg-transparent border-2 border-blue-300 rounded px-2 py-1 text-center w-full"
+            autoFocus
+            placeholder="Nhập tiêu đề chính..."
+          />
+        ) : (
+          <h2 
+            className={`text-xl font-bold text-blue-700 mb-4 print-title ${!readonly ? 'cursor-pointer hover:bg-blue-50 rounded px-2 py-1' : ''}`}
+            onClick={() => !readonly && setIsEditingMain(true)}
+            title={!readonly ? "Click để chỉnh sửa tiêu đề" : ""}
+          >
+            {editableMainTitle}
+          </h2>
+        )}
+
+        {/* Sub Title - Có thể chỉnh sửa */}
+        {isEditingSub && !readonly ? (
+          <input
+            type="text"
+            value={editableSubTitle}
+            onChange={(e) => setEditableSubTitle(e.target.value)}
+            onBlur={handleSubTitleSave}
+            onKeyDown={handleSubTitleKeyPress}
+            className="text-lg font-semibold text-gray-800 mb-2 print-subtitle bg-transparent border-2 border-gray-300 rounded px-2 py-1 text-center w-full"
+            autoFocus
+            placeholder="Nhập tiêu đề phụ..."
+          />
+        ) : (
+          <h3 
+            className={`text-lg font-semibold text-gray-800 mb-2 print-subtitle ${!readonly ? 'cursor-pointer hover:bg-gray-50 rounded px-2 py-1' : ''}`}
+            onClick={() => !readonly && setIsEditingSub(true)}
+            title={!readonly ? "Click để chỉnh sửa tiêu đề phụ" : ""}
+          >
+            {editableSubTitle}
+          </h3>
+        )}
         
         {/* Show warnings */}
         {warnings.length > 0 && (
@@ -304,13 +387,13 @@ export default function ImageGridEditor({
         )}
       </div>
 
-      {/* Image Grid Section - CHÍNH XÁC 4/5 of page height (237.6mm) */}
+      {/* Image Grid Section - TĂNG CHIỀU CAO ĐỂ BÙ CHO HEADER GIẢM */}
       <div className="image-grid-container" style={{ 
-        height: '237.6mm',
+        height: '252mm',
         display: 'flex', 
-        alignItems: 'center', 
+        alignItems: 'flex-start', 
         justifyContent: 'center',
-        padding: '10mm',
+        padding: '15mm 10mm 10mm 10mm',
         boxSizing: 'border-box',
         overflow: 'hidden' // QUAN TRỌNG: Ngăn tràn
       }}>

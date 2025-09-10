@@ -1,0 +1,138 @@
+/* 
+ * PRINT OVERRIDE CSS - Force WYSIWYG
+ * This file specifically targets browser print defaults
+ */
+
+@media print {
+  /* FORCE REMOVE ALL BROWSER HEADERS/FOOTERS */
+  @page {
+    size: A4 !important;
+    margin: 15mm !important;
+    
+    /* Completely disable all page margins content */
+    @top-left-corner { content: "" !important; display: none !important; }
+    @top-left { content: "" !important; display: none !important; }
+    @top-center { content: "" !important; display: none !important; }
+    @top-right { content: "" !important; display: none !important; }
+    @top-right-corner { content: "" !important; display: none !important; }
+    
+    @bottom-left-corner { content: "" !important; display: none !important; }
+    @bottom-left { content: "" !important; display: none !important; }
+    @bottom-center { content: "" !important; display: none !important; }
+    @bottom-right { content: "" !important; display: none !important; }
+    @bottom-right-corner { content: "" !important; display: none !important; }
+    
+    @left-top { content: "" !important; display: none !important; }
+    @left-middle { content: "" !important; display: none !important; }
+    @left-bottom { content: "" !important; display: none !important; }
+    
+    @right-top { content: "" !important; display: none !important; }
+    @right-middle { content: "" !important; display: none !important; }
+    @right-bottom { content: "" !important; display: none !important; }
+  }
+  
+  /* FORCE CLEAN HTML/BODY */
+  html {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    font-family: Arial, sans-serif !important;
+    font-size: 12pt !important;
+    line-height: 1.4 !important;
+    color: #000 !important;
+  }
+  
+  /* REMOVE ALL PSEUDO ELEMENTS */
+  *::before,
+  *::after {
+    content: none !important;
+    display: none !important;
+  }
+  
+  /* FORCE HIDE BROWSER UI ELEMENTS */
+  .screen-only,
+  .no-print,
+  button,
+  input[type="button"],
+  input[type="submit"],
+  .cursor-pointer,
+  .hover\:*,
+  [class*="hover:"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+  
+  /* ENSURE ONLY CONTENT IS VISIBLE */
+  .construction-report-page {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    page-break-inside: avoid !important;
+  }
+  
+  /* FORCE TITLE STYLES */
+  .print-title {
+    color: #1d4ed8 !important;
+    font-size: 18pt !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    margin: 0 0 10pt 0 !important;
+    padding: 0 !important;
+  }
+  
+  .print-subtitle {
+    color: #374151 !important;
+    font-size: 14pt !important;
+    font-weight: 600 !important;
+    text-align: center !important;
+    margin: 0 0 15pt 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* HIDE ALL COUNTERS AND PAGE INFO */
+  counter-reset: none !important;
+  counter-increment: none !important;
+}
+
+/* ADDITIONAL BROWSER-SPECIFIC OVERRIDES */
+@media print {
+  /* Chrome/Safari specific */
+  @page :first {
+    @top-left { content: "" !important; }
+    @top-center { content: "" !important; }
+    @top-right { content: "" !important; }
+    @bottom-left { content: "" !important; }
+    @bottom-center { content: "" !important; }
+    @bottom-right { content: "" !important; }
+  }
+  
+  @page :left {
+    @top-left { content: "" !important; }
+    @top-center { content: "" !important; }
+    @top-right { content: "" !important; }
+    @bottom-left { content: "" !important; }
+    @bottom-center { content: "" !important; }
+    @bottom-right { content: "" !important; }
+  }
+  
+  @page :right {
+    @top-left { content: "" !important; }
+    @top-center { content: "" !important; }
+    @top-right { content: "" !important; }
+    @bottom-left { content: "" !important; }
+    @bottom-center { content: "" !important; }
+    @bottom-right { content: "" !important; }
+  }
+}

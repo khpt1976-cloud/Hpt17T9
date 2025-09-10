@@ -6,6 +6,7 @@ import "./globals.css"
 import "../styles/construction-report.css"
 import "../styles/print.css"
 import "../styles/print-layout.css"
+import "../styles/print-override.css"
 
 export const metadata: Metadata = {
   title: "ConstructVN - Construction Management System",
