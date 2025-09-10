@@ -4298,7 +4298,26 @@ export default function ReportEditorPage() {
                         onChange={(e) => {
                           const value = Number(e.target.value)
                           
-                          // Luôn cập nhật state để cho phép nhập
+                          // STRICT VALIDATION - Không cho phép vượt quá giới hạn
+                          if (value > 20) {
+                            toast({
+                              title: "❌ Vượt quá giới hạn",
+                              description: "Tối đa 20 ảnh trên 1 trang. Vui lòng nhập số từ 1-20.",
+                              variant: "destructive",
+                            })
+                            return // KHÔNG cập nhật state
+                          }
+                          
+                          if (value < 1) {
+                            toast({
+                              title: "❌ Giá trị không hợp lệ",
+                              description: "Số ảnh phải lớn hơn 0.",
+                              variant: "destructive",
+                            })
+                            return // KHÔNG cập nhật state
+                          }
+                          
+                          // Cập nhật state chỉ khi hợp lệ
                           setImagesPerPage(value)
                           
                           // Sử dụng hàm tính toán thông minh
@@ -4307,10 +4326,10 @@ export default function ReportEditorPage() {
                             imagesPerRow: imagesPerRow
                           })
                           
-                          // Hiển thị lỗi nếu có (nhưng vẫn cho phép nhập)
+                          // Hiển thị lỗi nếu có
                           if (calculation.errors.length > 0) {
                             toast({
-                              title: "Lỗi",
+                              title: "❌ Lỗi layout",
                               description: calculation.errors[0],
                               variant: "destructive",
                             })
@@ -4319,7 +4338,7 @@ export default function ReportEditorPage() {
                           // Hiển thị cảnh báo nếu có
                           if (calculation.warnings.length > 0) {
                             toast({
-                              title: "Cảnh báo", 
+                              title: "⚠️ Cảnh báo", 
                               description: calculation.warnings[0],
                               variant: "default",
                             })
@@ -4338,18 +4357,31 @@ export default function ReportEditorPage() {
                     <Select value={imagesPerRow.toString()} onValueChange={(value) => {
                       const newImagesPerRow = Number(value)
                       
+                      // STRICT VALIDATION - Không cho phép vượt quá 4 cột
+                      if (newImagesPerRow > 4) {
+                        toast({
+                          title: "❌ Vượt quá giới hạn",
+                          description: "Tối đa 4 khung theo chiều ngang. Vui lòng chọn từ 1-4.",
+                          variant: "destructive",
+                        })
+                        return // KHÔNG cập nhật state
+                      }
+                      
                       // Sử dụng hàm tính toán thông minh
                       const calculation = calculateGridLayout({
                         imagesPerPage: imagesPerPage,
                         imagesPerRow: newImagesPerRow
                       })
                       
-                      setImagesPerRow(newImagesPerRow)
+                      // Chỉ cập nhật state khi hợp lệ
+                      if (calculation.errors.length === 0) {
+                        setImagesPerRow(newImagesPerRow)
+                      }
                       
                       // Hiển thị lỗi nếu có
                       if (calculation.errors.length > 0) {
                         toast({
-                          title: "Lỗi",
+                          title: "❌ Lỗi layout",
                           description: calculation.errors[0],
                           variant: "destructive",
                         })
@@ -4358,7 +4390,7 @@ export default function ReportEditorPage() {
                       // Hiển thị cảnh báo nếu có
                       if (calculation.warnings.length > 0) {
                         toast({
-                          title: "Cảnh báo",
+                          title: "⚠️ Cảnh báo",
                           description: calculation.warnings[0],
                           variant: "default",
                         })

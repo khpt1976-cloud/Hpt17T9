@@ -35,7 +35,7 @@ const A4_CONSTANTS = {
   
   // Available area for images (4/5 of page height, with margins)
   AVAILABLE_WIDTH: 180,   // mm (210 - 30 margin) - conservative
-  AVAILABLE_HEIGHT: 200,  // mm (safe area for images) - conservative
+  AVAILABLE_HEIGHT: 238,  // mm (4/5 of 297mm = 237.6mm) - CHÍNH XÁC 4/5 TRANG
   
   // Header area (1/5 of page height)
   HEADER_HEIGHT: 59,      // mm (297 * 1/5)
@@ -55,7 +55,7 @@ const A4_CONSTANTS = {
 }
 
 /**
- * Tính toán layout grid dựa trên input người dùng
+ * Tính toán layout grid dựa trên input người dùng - STRICT 4x5 LIMITS
  */
 export function calculateGridLayout(input: GridCalculationInput): GridCalculationResult {
   const { imagesPerPage, imagesPerRow } = input
@@ -79,14 +79,14 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
     return result
   }
   
-  // Validation 2: Maximum constraints
+  // Validation 2: STRICT Maximum constraints - KHÔNG CHO PHÉP VƯỢT QUÁ
   if (imagesPerPage > A4_CONSTANTS.MAX_IMAGES_PER_PAGE) {
-    result.errors.push(`Tối đa ${A4_CONSTANTS.MAX_IMAGES_PER_PAGE} ảnh trên 1 trang`)
+    result.errors.push(`❌ VƯỢT QUÁ GIỚI HẠN: Tối đa ${A4_CONSTANTS.MAX_IMAGES_PER_PAGE} ảnh trên 1 trang. Bạn đang cố thêm ${imagesPerPage} ảnh.`)
     return result
   }
   
   if (imagesPerRow > A4_CONSTANTS.MAX_COLS) {
-    result.errors.push(`Tối đa ${A4_CONSTANTS.MAX_COLS} khung theo chiều ngang`)
+    result.errors.push(`❌ VƯỢT QUÁ GIỚI HẠN: Tối đa ${A4_CONSTANTS.MAX_COLS} khung theo chiều ngang. Bạn đang cố tạo ${imagesPerRow} khung/hàng.`)
     return result
   }
   
@@ -94,9 +94,9 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
   const rows = Math.ceil(imagesPerPage / imagesPerRow)
   result.rows = rows
   
-  // Validation 3: Maximum rows
+  // Validation 3: STRICT Maximum rows - KHÔNG CHO PHÉP VƯỢT QUÁ
   if (rows > A4_CONSTANTS.MAX_ROWS) {
-    result.errors.push(`Với ${imagesPerRow} khung/hàng và ${imagesPerPage} ảnh sẽ tạo ${rows} hàng. Tối đa chỉ được ${A4_CONSTANTS.MAX_ROWS} hàng.`)
+    result.errors.push(`❌ VƯỢT QUÁ GIỚI HẠN: Với ${imagesPerRow} khung/hàng và ${imagesPerPage} ảnh sẽ tạo ${rows} hàng. Tối đa chỉ được ${A4_CONSTANTS.MAX_ROWS} hàng.`)
     return result
   }
   
@@ -107,33 +107,28 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
   const availableWidthForCells = A4_CONSTANTS.AVAILABLE_WIDTH - totalGapWidth
   const availableHeightForCells = A4_CONSTANTS.AVAILABLE_HEIGHT - totalGapHeight
   
-  // Calculate cell dimensions - ưu tiên fit trong available area
+  // Calculate cell dimensions - LUÔN FIT TRONG AVAILABLE AREA
   const calculatedCellWidth = Math.floor(availableWidthForCells / imagesPerRow)
   const calculatedCellHeight = Math.floor(availableHeightForCells / rows)
   
-  // Apply size constraints - PHẢI fit trong available area
-  let finalCellWidth = Math.max(A4_CONSTANTS.MIN_CELL_SIZE, calculatedCellWidth)
-  let finalCellHeight = Math.max(A4_CONSTANTS.MIN_CELL_SIZE, calculatedCellHeight)
+  // STRICT: Cell size PHẢI fit trong available area - không được vượt quá
+  let finalCellWidth = calculatedCellWidth
+  let finalCellHeight = calculatedCellHeight
   
-  // Đảm bảo không vượt quá available area (quan trọng nhất)
-  const maxAllowedWidth = Math.floor(availableWidthForCells / imagesPerRow)
-  const maxAllowedHeight = Math.floor(availableHeightForCells / rows)
+  // Apply minimum size constraint (nhưng vẫn ưu tiên fit trong trang)
+  if (finalCellWidth < A4_CONSTANTS.MIN_CELL_SIZE) {
+    result.warnings.push(`⚠️ Khung ảnh rất nhỏ (${finalCellWidth}mm chiều rộng). Khuyến nghị giảm số khung/hàng.`)
+  }
   
-  finalCellWidth = Math.min(finalCellWidth, maxAllowedWidth)
-  finalCellHeight = Math.min(finalCellHeight, maxAllowedHeight)
+  if (finalCellHeight < A4_CONSTANTS.MIN_CELL_SIZE) {
+    result.warnings.push(`⚠️ Khung ảnh rất thấp (${finalCellHeight}mm chiều cao). Khuyến nghị giảm số ảnh.`)
+  }
   
-  // Chỉ sau đó mới áp dụng MAX_CELL_SIZE
+  // Apply maximum size constraint (để tránh khung quá lớn khi ít ảnh)
   finalCellWidth = Math.min(A4_CONSTANTS.MAX_CELL_SIZE, finalCellWidth)
   finalCellHeight = Math.min(A4_CONSTANTS.MAX_CELL_SIZE, finalCellHeight)
   
-  // Check if cells are too small
-  if (calculatedCellWidth < A4_CONSTANTS.MIN_CELL_SIZE) {
-    result.warnings.push(`Khung ảnh sẽ rất nhỏ (${calculatedCellWidth}mm). Khuyến nghị giảm số khung/hàng.`)
-  }
-  
-  if (calculatedCellHeight < A4_CONSTANTS.MIN_CELL_SIZE) {
-    result.warnings.push(`Khung ảnh sẽ rất thấp (${calculatedCellHeight}mm). Khuyến nghị giảm số ảnh.`)
-  }
+  // Đã xử lý warnings ở trên - xóa duplicate code
   
   // Calculate total grid dimensions
   const totalGridWidth = (finalCellWidth * imagesPerRow) + totalGapWidth

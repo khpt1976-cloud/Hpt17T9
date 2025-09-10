@@ -225,10 +225,50 @@ export default function ImageGridEditor({
     )
   }
 
+  // Nếu có lỗi validation, hiển thị thông báo lỗi
+  if (!isValid || errors.length > 0) {
+    return (
+      <div className="construction-report-page" style={{ height: '297mm', width: '210mm', padding: '20mm' }}>
+        <div className="text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-4">❌ Không thể tạo trang ảnh</h2>
+          <div className="text-left bg-red-50 p-4 rounded-lg border border-red-200">
+            <h3 className="font-semibold text-red-700 mb-2">Lỗi:</h3>
+            {errors.map((error, index) => (
+              <p key={index} className="text-red-600 mb-1">• {error}</p>
+            ))}
+            
+            <div className="mt-4 p-3 bg-blue-50 rounded border border-blue-200">
+              <h4 className="font-semibold text-blue-700 mb-2">📋 Giới hạn cho phép:</h4>
+              <ul className="text-blue-600 text-sm">
+                <li>• Tối đa <strong>4 khung theo chiều ngang</strong></li>
+                <li>• Tối đa <strong>5 khung theo chiều dọc</strong></li>
+                <li>• Tổng số ảnh tối đa: <strong>20 ảnh</strong> (4×5)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="construction-report-page" style={{ height: '297mm', width: '210mm' }}>
-      {/* Header Section - 1/5 of page height (59mm) */}
-      <div className="text-center" style={{ height: '59mm', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+    <div className="construction-report-page" style={{ 
+      height: '297mm', 
+      width: '210mm',
+      margin: '0',
+      padding: '0',
+      boxSizing: 'border-box',
+      overflow: 'hidden' // QUAN TRỌNG: Ngăn tràn trang
+    }}>
+      {/* Header Section - CHÍNH XÁC 1/5 of page height (59.4mm) */}
+      <div className="text-center" style={{ 
+        height: '59.4mm', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        justifyContent: 'center',
+        padding: '5mm 10mm',
+        boxSizing: 'border-box'
+      }}>
         <h2 className="text-xl font-bold text-blue-700 mb-2 print-title">Báo cáo thi công</h2>
         <p className="text-gray-600 text-sm mb-2 print-subtitle">Trang {pageNumber}</p>
         <h3 className="text-lg font-semibold text-gray-800 mb-2 print-subtitle">Hình ảnh thi công</h3>
@@ -242,37 +282,34 @@ export default function ImageGridEditor({
         {warnings.length > 0 && (
           <div className="text-yellow-600 text-xs mt-1">
             {warnings.map((warning, index) => (
-              <p key={index}>⚠️ {warning}</p>
-            ))}
-          </div>
-        )}
-        
-        {/* Show errors */}
-        {errors.length > 0 && (
-          <div className="text-red-600 text-xs mt-1">
-            {errors.map((error, index) => (
-              <p key={index}>❌ {error}</p>
+              <p key={index}>{warning}</p>
             ))}
           </div>
         )}
       </div>
 
-      {/* Image Grid Section - Conservative safe area (200mm) */}
-      <div className="image-grid-container" style={{ height: '200mm', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Image Grid Section - CHÍNH XÁC 4/5 of page height (237.6mm) */}
+      <div className="image-grid-container" style={{ 
+        height: '237.6mm',
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        padding: '10mm',
+        boxSizing: 'border-box',
+        overflow: 'hidden' // QUAN TRỌNG: Ngăn tràn
+      }}>
         <div 
-          className="grid mx-auto"
           style={{
+            display: 'grid',
             gridTemplateColumns: `repeat(${imagesPerRow}, ${finalCellWidth}mm)`,
             gridTemplateRows: `repeat(${rows}, ${finalCellHeight}mm)`,
             gap: `${gapSize}mm`,
             width: `${totalGridWidth}mm`,
             height: `${totalGridHeight}mm`,
-            maxWidth: `${availableWidth}mm`,
-            maxHeight: `${availableHeight}mm`,
             justifyContent: 'center',
             alignItems: 'center',
-            display: 'grid',
-            justifyItems: 'center'
+            justifyItems: 'center',
+            alignContent: 'center'
           }}
         >
           {Array.from({ length: imagesPerPage }, (_, index) => renderImageSlot(index))}
