@@ -2819,6 +2819,12 @@ export default function ReportEditorPage() {
 
             allPagesContent += `
               <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
+                <div class="page-header">
+                  <div class="header-date"></div>
+                  <div class="header-title"></div>
+                  <div class="header-page"></div>
+                </div>
+                
                 <div class="page-content">
                   <div class="content-header">
                     <h1 class="document-title">${reportName}</h1>
@@ -2840,6 +2846,12 @@ export default function ReportEditorPage() {
                       </div>
                     `).join('')}
                   </div>
+                  
+                  <div class="page-footer">
+                    <div class="footer-left"></div>
+                    <div class="footer-center"></div>
+                    <div class="footer-right"></div>
+                  </div>
                 </div>
               </div>
             `
@@ -2851,6 +2863,12 @@ export default function ReportEditorPage() {
             
             allPagesContent += `
               <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
+                <div class="page-header">
+                  <div class="header-date"></div>
+                  <div class="header-title"></div>
+                  <div class="header-page"></div>
+                </div>
+                
                 <div class="page-content">
                   <div class="content-header">
                     <h1 class="document-title">${reportName}</h1>
@@ -2870,6 +2888,12 @@ export default function ReportEditorPage() {
                       </div>
                     `).join('')}
                   </div>
+                  
+                  <div class="page-footer">
+                    <div class="footer-left"></div>
+                    <div class="footer-center"></div>
+                    <div class="footer-right"></div>
+                  </div>
                 </div>
               </div>
             `
@@ -2880,6 +2904,12 @@ export default function ReportEditorPage() {
               const content = pageContent
               allPagesContent += `
                 <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
+                  <div class="page-header">
+                    <div class="header-date"></div>
+                    <div class="header-title"></div>
+                    <div class="header-page"></div>
+                  </div>
+                  
                   <div class="page-content">
                     <div class="content-header">
                       <h1 class="document-title">${reportName}</h1>
@@ -2887,6 +2917,12 @@ export default function ReportEditorPage() {
                     
                     <div class="document-content">
                       ${content}
+                    </div>
+                    
+                    <div class="page-footer">
+                      <div class="footer-left"></div>
+                      <div class="footer-center"></div>
+                      <div class="footer-right"></div>
                     </div>
                   </div>
                 </div>
@@ -2944,15 +2980,27 @@ export default function ReportEditorPage() {
                 color: #666;
               }
               
+              .header-date {
+                flex: 1;
+                text-align: left;
+              }
+              
               .header-title {
+                flex: 1;
+                text-align: center;
                 font-weight: bold;
                 color: #000;
+              }
+              
+              .header-page {
+                flex: 1;
+                text-align: right;
               }
               
               .page-content {
                 flex: 1;
                 padding: 0;
-                margin-top: 60px;
+                margin-top: 20px;
               }
               
               .content-header {
@@ -3020,12 +3068,29 @@ export default function ReportEditorPage() {
               }
               
               .page-footer {
-                text-align: center;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
                 margin-top: 30px;
                 font-size: 10pt;
                 color: #666;
                 padding-top: 15px;
                 border-top: 1px solid #eee;
+              }
+              
+              .footer-left {
+                flex: 1;
+                text-align: left;
+              }
+              
+              .footer-center {
+                flex: 1;
+                text-align: center;
+              }
+              
+              .footer-right {
+                flex: 1;
+                text-align: right;
               }
               
               .document-content {
@@ -3898,15 +3963,7 @@ export default function ReportEditorPage() {
             In tài liệu
           </Button>
           
-          <Button onClick={handleExportPDF} variant="ghost" size="sm" className="text-white hover:bg-blue-700">
-            <Download className="w-4 h-4 mr-2" />
-            Xuất PDF (Cũ)
-          </Button>
-          
-          <Button onClick={handleExportPDFNew} variant="ghost" size="sm" className="text-white hover:bg-green-700 bg-green-700/20">
-            <Download className="w-4 h-4 mr-2" />
-            Xuất PDF (Mới)
-          </Button>
+
 
           {/* 4 nút quản lý file mới */}
           <div className="border-l border-blue-500 pl-4 ml-2">
