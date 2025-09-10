@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useToast } from "@/hooks/use-toast"
 import { calculateGridLayout } from "@/utils/grid-calculator"
+import PrintButton from "./print-button"
 
 interface ImageGridEditorProps {
   pageNumber: number
@@ -316,14 +317,25 @@ export default function ImageGridEditor({
   }
 
   return (
-    <div className="construction-report-page" style={{ 
-      height: '297mm', 
-      width: '210mm',
-      margin: '0',
-      padding: '0',
-      boxSizing: 'border-box',
-      overflow: 'hidden' // QUAN TRỌNG: Ngăn tràn trang
-    }}>
+    <>
+      {/* Print Button - Only show on screen */}
+      {!readonly && (
+        <div className="screen-only mb-4 flex justify-end">
+          <PrintButton 
+            content={null} 
+            title={`${editableMainTitle} - ${editableSubTitle}`}
+          />
+        </div>
+      )}
+      
+      <div className="construction-report-page" style={{ 
+        height: '297mm', 
+        width: '210mm',
+        margin: '0',
+        padding: '0',
+        boxSizing: 'border-box',
+        overflow: 'hidden' // QUAN TRỌNG: Ngăn tràn trang
+      }}>
       {/* Header Section - GIẢM CHIỀU CAO ĐỂ TĂNG KHOẢNG CÁCH CHO KHUNG ẢNH */}
       <div className="text-center" style={{ 
         height: '45mm', 
@@ -415,5 +427,6 @@ export default function ImageGridEditor({
         </div>
       </div>
     </div>
+    </>
   )
 }
