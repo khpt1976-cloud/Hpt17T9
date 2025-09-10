@@ -2263,8 +2263,84 @@ export default function ReportEditorPage() {
           for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
             const pageContent = pagesContent[pageNum] || ''
             const isImagePage = !!imagePagesConfig[pageNum]
+            const hasTextContent = pageContent && pageContent.trim() !== ''
             
-            if (isImagePage) {
+            // ✅ FIX: Xử lý mixed content (trang có cả text và ảnh)
+            if (isImagePage && hasTextContent) {
+              // Render mixed content page (text + images)
+              const config = imagePagesConfig[pageNum]
+              const originalImages = config?.images || []
+              const imagesPerRow = config?.imagesPerRow || 2
+              
+              // PRE-PROCESS: Convert all images to squares
+              const squareImages: string[] = []
+              for (const imageUrl of originalImages) {
+                if (imageUrl) {
+                  try {
+                    const squareImageUrl = await createSquareImage(imageUrl)
+                    squareImages.push(squareImageUrl)
+                  } catch (error) {
+                    console.error('Failed to create square image:', error)
+                    squareImages.push(imageUrl) // Fallback to original
+                  }
+                } else {
+                  squareImages.push('') // Empty slot
+                }
+              }
+
+              allPagesContent += `
+                <div class="pdf-page ${pageNum > 1 ? 'page-break' : ''}">
+                  <div class="pdf-header">
+                    <div class="header-left">
+                      <div class="company-info">
+                        <strong>CÔNG TY XÂY DỰNG ABC</strong><br>
+                        <small>Địa chỉ: 123 Đường ABC, Quận 1, TP.HCM</small>
+                      </div>
+                    </div>
+                    <div class="header-center">
+                      <h1 class="document-title">NHẬT KÝ THI CÔNG</h1>
+                      <div class="document-subtitle">${reportName}</div>
+                    </div>
+                    <div class="header-right">
+                      <div class="page-info">
+                        Trang ${pageNum}/${totalPages}<br>
+                        <small>${new Date().toLocaleDateString('vi-VN')}</small>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="pdf-content">
+                    <div class="section-header">
+                      <h2>NỘI DUNG TRANG ${pageNum}</h2>
+                      <div class="section-line"></div>
+                    </div>
+                    
+                    <div class="text-content">
+                      ${pageContent}
+                    </div>
+                    
+                    <div class="section-header" style="margin-top: 20px;">
+                      <h3>HÌNH ẢNH</h3>
+                      <div class="section-line"></div>
+                    </div>
+                    
+                    <div class="image-grid" style="display: grid; grid-template-columns: repeat(${imagesPerRow}, 1fr); gap: 10px; margin: 15px 0;">
+                      ${squareImages.map((imageUrl, index) => `
+                        <div class="image-container" style="aspect-ratio: 1; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center; background: #f9f9f9;">
+                          ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 100%; object-fit: cover;" alt="Ảnh ${index + 1}">` : `<span style="color: #999; font-size: 12px;">Ảnh ${index + 1}</span>`}
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                  
+                  <div class="pdf-footer">
+                    <div class="footer-left">Nhật ký thi công - ${reportName}</div>
+                    <div class="footer-center">Trang ${pageNum} / ${totalPages}</div>
+                    <div class="footer-right">${new Date().toLocaleDateString('vi-VN')}</div>
+                  </div>
+                </div>
+              `
+            } else if (isImagePage) {
               // Render image page with professional layout
               const config = imagePagesConfig[pageNum]
               const originalImages = config?.images || []
@@ -2347,46 +2423,49 @@ export default function ReportEditorPage() {
             `
           } else {
             // Render text page with professional layout
-            const content = pageContent || 'Không có nội dung'
-            allPagesContent += `
-              <div class="pdf-page ${pageNum > 1 ? 'page-break' : ''}">
-                <div class="pdf-header">
-                  <div class="header-left">
-                    <div class="company-info">
-                      <strong>CÔNG TY XÂY DỰNG ABC</strong><br>
-                      <small>Địa chỉ: 123 Đường ABC, Quận 1, TP.HCM</small>
+            // ✅ FIX: Chỉ render trang nếu có nội dung thực sự
+            if (pageContent && pageContent.trim() !== '') {
+              const content = pageContent
+              allPagesContent += `
+                <div class="pdf-page ${pageNum > 1 ? 'page-break' : ''}">
+                  <div class="pdf-header">
+                    <div class="header-left">
+                      <div class="company-info">
+                        <strong>CÔNG TY XÂY DỰNG ABC</strong><br>
+                        <small>Địa chỉ: 123 Đường ABC, Quận 1, TP.HCM</small>
+                      </div>
                     </div>
-                  </div>
-                  <div class="header-center">
-                    <h1 class="document-title">NHẬT KÝ THI CÔNG</h1>
-                    <div class="document-subtitle">${reportName}</div>
-                  </div>
-                  <div class="header-right">
-                    <div class="page-info">
-                      Trang ${pageNum}/${totalPages}<br>
-                      <small>${new Date().toLocaleDateString('vi-VN')}</small>
+                    <div class="header-center">
+                      <h1 class="document-title">NHẬT KÝ THI CÔNG</h1>
+                      <div class="document-subtitle">${reportName}</div>
                     </div>
-                  </div>
-                </div>
-                
-                <div class="pdf-content">
-                  <div class="section-header">
-                    <h2>NỘI DUNG TRANG ${pageNum}</h2>
-                    <div class="section-line"></div>
+                    <div class="header-right">
+                      <div class="page-info">
+                        Trang ${pageNum}/${totalPages}<br>
+                        <small>${new Date().toLocaleDateString('vi-VN')}</small>
+                      </div>
+                    </div>
                   </div>
                   
-                  <div class="text-content">
-                    ${content}
+                  <div class="pdf-content">
+                    <div class="section-header">
+                      <h2>NỘI DUNG TRANG ${pageNum}</h2>
+                      <div class="section-line"></div>
+                    </div>
+                    
+                    <div class="text-content">
+                      ${content}
+                    </div>
+                  </div>
+                  
+                  <div class="pdf-footer">
+                    <div class="footer-left">Nhật ký thi công - ${reportName}</div>
+                    <div class="footer-center">Trang ${pageNum} / ${totalPages}</div>
+                    <div class="footer-right">${new Date().toLocaleDateString('vi-VN')}</div>
                   </div>
                 </div>
-                
-                <div class="pdf-footer">
-                  <div class="footer-left">Nhật ký thi công - ${reportName}</div>
-                  <div class="footer-center">Trang ${pageNum} / ${totalPages}</div>
-                  <div class="footer-right">${new Date().toLocaleDateString('vi-VN')}</div>
-                </div>
-              </div>
-            `
+              `
+            }
           }
         }
 
@@ -2724,8 +2803,55 @@ export default function ReportEditorPage() {
         for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
           const pageContent = pagesContent[pageNum] || ''
           const isImagePage = !!imagePagesConfig[pageNum]
+          const hasTextContent = pageContent && pageContent.trim() !== ''
           
-          if (isImagePage) {
+          // ✅ FIX: Xử lý mixed content (trang có cả text và ảnh)
+          if (isImagePage && hasTextContent) {
+            // Render mixed content page (text + images)
+            const config = imagePagesConfig[pageNum]
+            const images = config?.images || []
+            const imagesPerRow = config?.imagesPerRow || 2
+
+            allPagesContent += `
+              <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
+                <div class="page-header">
+                  <div class="header-date">${new Date().toLocaleDateString('vi-VN')}</div>
+                  <div class="header-title">In nhật ký - Nhật ký thi công</div>
+                  <div class="header-page">${pageNum}/${totalPages}</div>
+                </div>
+                
+                <div class="page-content">
+                  <div class="content-header">
+                    <h1 class="document-title">${reportName}</h1>
+                    <p class="document-info">
+                      <strong>Trang ${pageNum}</strong> | ${new Date().toLocaleDateString('vi-VN')}
+                    </p>
+                  </div>
+                  
+                  <div class="document-content">
+                    ${pageContent}
+                  </div>
+                  
+                  <div class="content-header" style="margin-top: 20px;">
+                    <h3 class="section-title">Hình ảnh thi công</h3>
+                  </div>
+                  
+                  <div class="image-grid" style="display: grid; grid-template-columns: repeat(${imagesPerRow}, 1fr); gap: 15px; margin: 20px 0;">
+                    ${images.map((imageUrl, index) => `
+                      <div class="image-container">
+                        ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" alt="Ảnh ${index + 1}">` : `<div style="width: 100%; height: 150px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px;">Ảnh ${index + 1}</div>`}
+                        <div style="text-align: center; margin-top: 5px; font-size: 11px; color: #666;">Ảnh ${index + 1}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                  
+                  <div class="page-footer">
+                    Trang ${pageNum} - ${images.filter(img => img).length} ảnh / ${images.length} vị trí
+                  </div>
+                </div>
+              </div>
+            `
+          } else if (isImagePage) {
             // Render image page
             const config = imagePagesConfig[pageNum]
             const images = config?.images || []
@@ -2768,29 +2894,32 @@ export default function ReportEditorPage() {
             `
           } else {
             // Render text page
-            const content = pageContent || 'Không có nội dung'
-            allPagesContent += `
-              <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
-                <div class="page-header">
-                  <div class="header-date">${new Date().toLocaleDateString('vi-VN')}</div>
-                  <div class="header-title">In nhật ký - Nhật ký thi công</div>
-                  <div class="header-page">${pageNum}/${totalPages}</div>
-                </div>
-                
-                <div class="page-content">
-                  <div class="content-header">
-                    <h1 class="document-title">${reportName}</h1>
-                    <p class="document-info">
-                      <strong>Trang ${pageNum}</strong> | ${new Date().toLocaleDateString('vi-VN')}
-                    </p>
+            // ✅ FIX: Chỉ render trang nếu có nội dung thực sự
+            if (pageContent && pageContent.trim() !== '') {
+              const content = pageContent
+              allPagesContent += `
+                <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
+                  <div class="page-header">
+                    <div class="header-date">${new Date().toLocaleDateString('vi-VN')}</div>
+                    <div class="header-title">In nhật ký - Nhật ký thi công</div>
+                    <div class="header-page">${pageNum}/${totalPages}</div>
                   </div>
                   
-                  <div class="document-content">
-                    ${content}
+                  <div class="page-content">
+                    <div class="content-header">
+                      <h1 class="document-title">${reportName}</h1>
+                      <p class="document-info">
+                        <strong>Trang ${pageNum}</strong> | ${new Date().toLocaleDateString('vi-VN')}
+                      </p>
+                    </div>
+                    
+                    <div class="document-content">
+                      ${content}
+                    </div>
                   </div>
                 </div>
-              </div>
-            `
+              `
+            }
           }
         }
 
