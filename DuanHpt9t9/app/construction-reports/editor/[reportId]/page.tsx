@@ -2805,6 +2805,11 @@ export default function ReportEditorPage() {
           const isImagePage = !!imagePagesConfig[pageNum]
           const hasTextContent = pageContent && pageContent.trim() !== ''
           
+          // Skip empty pages (no content and not image page)
+          if (!hasTextContent && !isImagePage) {
+            continue
+          }
+          
           // ✅ FIX: Xử lý mixed content (trang có cả text và ảnh)
           if (isImagePage && hasTextContent) {
             // Render mixed content page (text + images)
@@ -2814,18 +2819,9 @@ export default function ReportEditorPage() {
 
             allPagesContent += `
               <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
-                <div class="page-header">
-                  <div class="header-date">${new Date().toLocaleDateString('vi-VN')}</div>
-                  <div class="header-title">In nhật ký - Nhật ký thi công</div>
-                  <div class="header-page">${pageNum}/${totalPages}</div>
-                </div>
-                
                 <div class="page-content">
                   <div class="content-header">
                     <h1 class="document-title">${reportName}</h1>
-                    <p class="document-info">
-                      <strong>Trang ${pageNum}</strong> | ${new Date().toLocaleDateString('vi-VN')}
-                    </p>
                   </div>
                   
                   <div class="document-content">
@@ -2844,10 +2840,6 @@ export default function ReportEditorPage() {
                       </div>
                     `).join('')}
                   </div>
-                  
-                  <div class="page-footer">
-                    Trang ${pageNum} - ${images.filter(img => img).length} ảnh / ${images.length} vị trí
-                  </div>
                 </div>
               </div>
             `
@@ -2859,16 +2851,9 @@ export default function ReportEditorPage() {
             
             allPagesContent += `
               <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
-                <div class="page-header">
-                  <div class="header-date">${new Date().toLocaleDateString('vi-VN')}</div>
-                  <div class="header-title">In nhật ký - Nhật ký thi công</div>
-                  <div class="header-page">${pageNum}/${totalPages}</div>
-                </div>
-                
                 <div class="page-content">
                   <div class="content-header">
-                    <h2 class="report-title">Báo cáo thi công</h2>
-                    <p class="report-page">Trang ${pageNum}</p>
+                    <h1 class="document-title">${reportName}</h1>
                     <h3 class="section-title">Hình ảnh thi công</h3>
                   </div>
                   
@@ -2879,15 +2864,11 @@ export default function ReportEditorPage() {
                           <img src="${imageUrl}" alt="Ảnh ${index + 1}" class="construction-image" />
                         ` : `
                           <div class="empty-image-slot">
-                            <span>Click để thay ảnh</span>
+                            <span></span>
                           </div>
                         `}
                       </div>
                     `).join('')}
-                  </div>
-                  
-                  <div class="page-footer">
-                    Trang ${pageNum} - ${images.filter(img => img).length} ảnh / ${images.length} vị trí
                   </div>
                 </div>
               </div>
@@ -2899,18 +2880,9 @@ export default function ReportEditorPage() {
               const content = pageContent
               allPagesContent += `
                 <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
-                  <div class="page-header">
-                    <div class="header-date">${new Date().toLocaleDateString('vi-VN')}</div>
-                    <div class="header-title">In nhật ký - Nhật ký thi công</div>
-                    <div class="header-page">${pageNum}/${totalPages}</div>
-                  </div>
-                  
                   <div class="page-content">
                     <div class="content-header">
                       <h1 class="document-title">${reportName}</h1>
-                      <p class="document-info">
-                        <strong>Trang ${pageNum}</strong> | ${new Date().toLocaleDateString('vi-VN')}
-                      </p>
                     </div>
                     
                     <div class="document-content">
@@ -2980,6 +2952,7 @@ export default function ReportEditorPage() {
               .page-content {
                 flex: 1;
                 padding: 0;
+                margin-top: 60px;
               }
               
               .content-header {
