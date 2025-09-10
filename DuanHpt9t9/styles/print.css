@@ -32,35 +32,30 @@
     background: white !important;
   }
 
-  /* Image grid container - fit to A4 page */
+  /* Image grid container - let ImageGridEditor handle sizing */
   .image-grid-container {
     width: 100% !important;
-    max-width: 170mm !important; /* A4 width minus margins */
     margin: 0 auto !important;
     page-break-inside: avoid !important;
+    overflow: hidden !important;
   }
 
-  /* Image slots - optimize for print */
+  /* Image slots - use dynamic sizing from ImageGridEditor */
   .image-slot {
-    width: 78mm !important; /* For 2 columns with margins */
-    height: 58mm !important;
-    margin: 1mm !important;
     border: 1px solid #333 !important;
     page-break-inside: avoid !important;
     background: white !important;
     overflow: hidden !important;
     box-sizing: border-box !important;
+    /* Let ImageGridEditor component define dimensions */
   }
 
-  /* 2x2 grid layout for print */
+  /* Grid layout for print - use dynamic sizing */
   .image-grid-2x2 {
     display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 2mm !important;
-    width: 100% !important;
-    max-width: 160mm !important;
     margin: 0 auto !important;
     justify-content: center !important;
+    /* Let ImageGridEditor define grid-template-columns and gap */
   }
 
   /* Image inside slot */

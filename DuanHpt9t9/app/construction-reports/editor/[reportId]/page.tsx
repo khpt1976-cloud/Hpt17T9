@@ -270,17 +270,17 @@ export default function ReportEditorPage() {
         } else if (success) {
           console.log(`✅ [LOAD EFFECT] Successfully loaded data on attempt ${attempts}`)
           
-          // ✅ AUTO-CREATE: Tự động tạo imagePagesConfig cho trang 7 nếu chưa có
+          // ✅ AUTO-CREATE: Tự động tạo imagePagesConfig cho trang 7 với 4x5 grid (20 ảnh)
           setTimeout(() => {
             setImagePagesConfig(prev => {
               if (!prev[7]) {
-                console.log(`🖼️ [AUTO-CREATE] Tạo imagePagesConfig cho trang 7`)
+                console.log(`🖼️ [AUTO-CREATE] Tạo imagePagesConfig cho trang 7 với 4x5 grid (20 ảnh)`)
                 return {
                   ...prev,
                   7: {
-                    imagesPerPage: 4,
-                    imagesPerRow: 2,
-                    images: [null, null, null, null]
+                    imagesPerPage: 20,
+                    imagesPerRow: 4,
+                    images: Array(20).fill(null)
                   }
                 }
               }
@@ -296,6 +296,26 @@ export default function ReportEditorPage() {
       tryLoadData()
     }
   }, [reportId])
+
+  // ✅ FORCE CREATE: Tự động tạo imagePagesConfig cho trang 7 nếu chưa có
+  useEffect(() => {
+    console.log(`🔍 [FORCE CREATE] Checking imagePagesConfig for page 7...`)
+    console.log(`🔍 [FORCE CREATE] Current imagePagesConfig:`, imagePagesConfig)
+    
+    if (!imagePagesConfig[7]) {
+      console.log(`🖼️ [FORCE CREATE] Tạo imagePagesConfig cho trang 7 với 4x5 grid (20 ảnh)`)
+      setImagePagesConfig(prev => ({
+        ...prev,
+        7: {
+          imagesPerPage: 20,
+          imagesPerRow: 4,
+          images: Array(20).fill(null)
+        }
+      }))
+    } else {
+      console.log(`✅ [FORCE CREATE] imagePagesConfig cho trang 7 đã tồn tại`)
+    }
+  }, [imagePagesConfig])
 
   // Load page content when currentPage changes
   useEffect(() => {

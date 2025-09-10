@@ -23,6 +23,7 @@ export default function ImageGridEditor({
 }: ImageGridEditorProps) {
   const { toast } = useToast()
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const [loadingSlots, setLoadingSlots] = useState<Set<number>>(new Set())
 
   // Sử dụng hàm tính toán thông minh
   const gridCalculation = calculateGridLayout({
@@ -75,24 +76,18 @@ export default function ImageGridEditor({
 
       console.log('📁 File selected:', file.name, 'Size:', file.size, 'Type:', file.type)
 
-      // Validate file
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: "Lỗi",
-          description: "Vui lòng chọn file ảnh!",
-          variant: "destructive",
-        })
-        return
-      }
+      // Set loading state
+      setLoadingSlots(prev => new Set(prev).add(slotIndex))
 
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "Lỗi", 
-          description: "File ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 5MB.",
-          variant: "destructive",
-        })
-        return
-      }
+      try {
+        // Validate file
+        if (!file.type.startsWith('image/')) {
+          throw new Error("Vui lòng chọn file ảnh (JPG, PNG, GIF, etc.)")
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error("File ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 10MB.")
+        }
 
       // CROP ẢNH THÀNH HÌNH VUÔNG TRƯỚC KHI LỮU
       const cropImageToSquare = (file: File): Promise<string> => {
@@ -142,22 +137,29 @@ export default function ImageGridEditor({
       }
 
       // Crop ảnh thành hình vuông trước khi lưu
-      try {
+        // CROP ẢNH THÀNH HÌNH VUÔNG TRƯỚC KHI LỮU
         const croppedImageData = await cropImageToSquare(file)
         console.log('✂️ Image cropped to square, length:', croppedImageData.length)
         
         onImageChange(slotIndex, croppedImageData)
         
         toast({
-          title: "Thành công",
-          description: `Đã thêm ảnh "${file.name}" (đã crop thành hình vuông) vào vị trí ${slotIndex + 1}`,
+          title: "✅ Thành công",
+          description: `Đã thêm ảnh "${file.name}" (tự động crop thành hình vuông) vào vị trí ${slotIndex + 1}`,
         })
       } catch (error) {
-        console.error('❌ Error cropping image:', error)
+        console.error('❌ Error processing image:', error)
         toast({
-          title: "Lỗi",
-          description: "Không thể xử lý ảnh! Vui lòng thử lại.",
+          title: "❌ Lỗi",
+          description: error instanceof Error ? error.message : "Không thể xử lý ảnh! Vui lòng thử lại.",
           variant: "destructive",
+        })
+      } finally {
+        // Clear loading state
+        setLoadingSlots(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(slotIndex)
+          return newSet
         })
       }
     }
@@ -169,6 +171,7 @@ export default function ImageGridEditor({
   const renderImageSlot = (slotIndex: number) => {
     const hasImage = images[slotIndex]
     const imageUrl = hasImage || ''
+    const isLoading = loadingSlots.has(slotIndex)
 
     return (
       <div
@@ -176,8 +179,9 @@ export default function ImageGridEditor({
         className={`
           relative cursor-pointer transition-all duration-200 rounded-lg overflow-hidden image-slot
           ${hasImage ? 'border-4 border-solid border-green-500' : 'border-4 border-dashed border-blue-500'}
-          ${!readonly ? 'hover:border-blue-700 hover:scale-105 hover:shadow-lg' : ''}
+          ${!readonly && !isLoading ? 'hover:border-blue-700 hover:scale-105 hover:shadow-lg' : ''}
           ${readonly ? 'cursor-not-allowed opacity-75' : ''}
+          ${isLoading ? 'cursor-wait opacity-75' : ''}
         `}
         style={{
           width: `${finalCellWidth}mm`,
@@ -187,9 +191,19 @@ export default function ImageGridEditor({
           printColorAdjust: 'exact',
           WebkitPrintColorAdjust: 'exact',
         }}
-        onClick={() => handleImageSlotClick(slotIndex)}
-        title={`Click để ${hasImage ? 'thay' : 'thêm'} ảnh ${slotIndex + 1}`}
+        onClick={() => !isLoading && handleImageSlotClick(slotIndex)}
+        title={
+          isLoading 
+            ? `Đang xử lý ảnh ${slotIndex + 1}...` 
+            : `Click để ${hasImage ? 'thay' : 'thêm'} ảnh ${slotIndex + 1}`
+        }
       >
+        {isLoading && (
+          <div className="absolute inset-0 bg-blue-500 bg-opacity-20 flex items-center justify-center z-10 screen-only">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        )}
+        
         {hasImage ? (
           <>
             <img
@@ -209,7 +223,7 @@ export default function ImageGridEditor({
               }}
             />
             <div className="absolute top-1 right-1 bg-black bg-opacity-80 text-white text-xs px-2 py-1 rounded screen-only">
-              Click để thay ảnh
+              {isLoading ? 'Đang xử lý...' : 'Click để thay ảnh'}
             </div>
           </>
         ) : (
@@ -217,7 +231,9 @@ export default function ImageGridEditor({
             <div className="w-8 h-8 border-2 border-blue-500 rounded flex items-center justify-center text-blue-500 font-bold text-xl mb-2">
               +
             </div>
-            <div className="text-sm font-medium">Click để thêm ảnh</div>
+            <div className="text-sm font-medium">
+              {isLoading ? 'Đang xử lý...' : 'Click để thêm ảnh'}
+            </div>
             <div className="text-xs text-gray-400 mt-1">Ảnh {slotIndex + 1}</div>
           </div>
         )}
