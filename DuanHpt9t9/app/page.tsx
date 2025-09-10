@@ -165,12 +165,7 @@ export default function HomePage() {
                       <span>{isHydrated ? t("services.digital_analysis") : "Phân tích cách chơi"}</span>
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 hover:bg-slate-700 cursor-pointer">
-                    <Link href="/bao-com" className="flex items-center space-x-2 w-full">
-                      <FileText className="w-4 h-4" />
-                      <span>{isHydrated ? t("services.bao_com") : "Bào Com"}</span>
-                    </Link>
-                  </DropdownMenuItem>
+
                 </DropdownMenuContent>
               </DropdownMenu>
               <a href="#pricing" className="text-slate-300 hover:text-cyan-400 transition-colors">

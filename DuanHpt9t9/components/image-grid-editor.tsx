@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useToast } from "@/hooks/use-toast"
+import { calculateGridLayout } from "@/utils/grid-calculator"
 
 interface ImageGridEditorProps {
   pageNumber: number
@@ -23,9 +24,27 @@ export default function ImageGridEditor({
   const { toast } = useToast()
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
 
-  const rows = Math.ceil(imagesPerPage / imagesPerRow)
-  const cellWidth = Math.floor(160 / imagesPerRow) // mm
-  const cellHeight = Math.floor(180 / rows) // mm
+  // Sử dụng hàm tính toán thông minh
+  const gridCalculation = calculateGridLayout({
+    imagesPerPage,
+    imagesPerRow
+  })
+
+  // Extract calculated values
+  const {
+    cellWidth: finalCellWidth,
+    cellHeight: finalCellHeight,
+    rows,
+    totalGridWidth,
+    totalGridHeight,
+    isValid,
+    warnings,
+    errors
+  } = gridCalculation
+
+  const gapSize = 5 // mm
+  const availableWidth = 180 // mm - conservative
+  const availableHeight = 200 // mm - conservative
 
   const handleImageSlotClick = async (slotIndex: number) => {
     console.log(`🖼️ Image slot ${slotIndex} clicked on page ${pageNumber}, readonly: ${readonly}`)
@@ -161,12 +180,8 @@ export default function ImageGridEditor({
           ${readonly ? 'cursor-not-allowed opacity-75' : ''}
         `}
         style={{
-          width: '70mm',
-          height: '70mm',
-          minWidth: '70mm',
-          minHeight: '70mm',
-          maxWidth: '70mm',
-          maxHeight: '70mm',
+          width: `${finalCellWidth}mm`,
+          height: `${finalCellHeight}mm`,
           backgroundColor: hasImage ? '#f0f9ff' : '#f8fafc',
           // Ensure print compatibility
           printColorAdjust: 'exact',
@@ -211,38 +226,57 @@ export default function ImageGridEditor({
   }
 
   return (
-    <div className="construction-report-page">
-      <div className="image-grid-container">
-      {/* Header */}
-      <div className="text-center mb-6">
+    <div className="construction-report-page" style={{ height: '297mm', width: '210mm' }}>
+      {/* Header Section - 1/5 of page height (59mm) */}
+      <div className="text-center" style={{ height: '59mm', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <h2 className="text-xl font-bold text-blue-700 mb-2 print-title">Báo cáo thi công</h2>
-        <p className="text-gray-600 text-sm mb-4 print-subtitle">Trang {pageNumber}</p>
-        <h3 className="text-lg font-semibold text-gray-800 print-subtitle">Hình ảnh thi công</h3>
+        <p className="text-gray-600 text-sm mb-2 print-subtitle">Trang {pageNumber}</p>
+        <h3 className="text-lg font-semibold text-gray-800 mb-2 print-subtitle">Hình ảnh thi công</h3>
+        
+        {/* Grid calculation info */}
+        <p className="text-gray-500 text-xs print-footer">
+          {imagesPerPage} ảnh ({imagesPerRow} ảnh/hàng) - {rows} hàng - Khung: {finalCellWidth}×{finalCellHeight}mm
+        </p>
+        
+        {/* Show warnings */}
+        {warnings.length > 0 && (
+          <div className="text-yellow-600 text-xs mt-1">
+            {warnings.map((warning, index) => (
+              <p key={index}>⚠️ {warning}</p>
+            ))}
+          </div>
+        )}
+        
+        {/* Show errors */}
+        {errors.length > 0 && (
+          <div className="text-red-600 text-xs mt-1">
+            {errors.map((error, index) => (
+              <p key={index}>❌ {error}</p>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Image Grid */}
-      <div 
-        className={`grid gap-3 mx-auto image-grid-2x2`}
-        style={{
-          gridTemplateColumns: '70mm 70mm',
-          gridTemplateRows: '70mm 70mm',
-          gap: '5mm',
-          width: '145mm',
-          height: '145mm',
-          justifyContent: 'center',
-          alignItems: 'center',
-          margin: '0 auto',
-          display: 'grid',
-          justifyItems: 'center'
-        }}
-      >
-        {Array.from({ length: imagesPerPage }, (_, index) => renderImageSlot(index))}
-      </div>
-
-      {/* Footer */}
-      <div className="text-center mt-6 pt-4 border-t border-gray-200 text-gray-500 text-sm print-footer">
-        Trang {pageNumber} - {imagesPerPage} ảnh ({imagesPerRow} ảnh/hàng) - {rows} hàng
-      </div>
+      {/* Image Grid Section - Conservative safe area (200mm) */}
+      <div className="image-grid-container" style={{ height: '200mm', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div 
+          className="grid mx-auto"
+          style={{
+            gridTemplateColumns: `repeat(${imagesPerRow}, ${finalCellWidth}mm)`,
+            gridTemplateRows: `repeat(${rows}, ${finalCellHeight}mm)`,
+            gap: `${gapSize}mm`,
+            width: `${totalGridWidth}mm`,
+            height: `${totalGridHeight}mm`,
+            maxWidth: `${availableWidth}mm`,
+            maxHeight: `${availableHeight}mm`,
+            justifyContent: 'center',
+            alignItems: 'center',
+            display: 'grid',
+            justifyItems: 'center'
+          }}
+        >
+          {Array.from({ length: imagesPerPage }, (_, index) => renderImageSlot(index))}
+        </div>
       </div>
     </div>
   )

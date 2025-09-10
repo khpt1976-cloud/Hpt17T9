@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useLanguage } from "@/contexts/language-context"
 import { useToast } from "@/hooks/use-toast"
+import { calculateGridLayout } from "@/utils/grid-calculator"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -1790,6 +1791,38 @@ export default function ReportEditorPage() {
       // Auto dismiss error toast after 3 seconds
       setTimeout(() => errorToast.dismiss(), 3000)
       return
+    }
+
+    // Validation thông minh sử dụng hàm tính toán
+    if (useImagePages) {
+      const calculation = calculateGridLayout({
+        imagesPerPage,
+        imagesPerRow
+      })
+      
+      if (!calculation.isValid || calculation.errors.length > 0) {
+        const errorMessage = calculation.errors.length > 0 
+          ? calculation.errors[0] 
+          : "Không thể tạo layout với cấu hình này"
+          
+        const errorToast = toast({
+          title: "Lỗi",
+          description: errorMessage,
+          variant: "destructive",
+        })
+        setTimeout(() => errorToast.dismiss(), 3000)
+        return
+      }
+      
+      // Hiển thị cảnh báo nếu có (nhưng vẫn cho phép tạo)
+      if (calculation.warnings.length > 0) {
+        const warningToast = toast({
+          title: "Cảnh báo",
+          description: calculation.warnings[0],
+          variant: "default",
+        })
+        setTimeout(() => warningToast.dismiss(), 5000)
+      }
     }
 
     console.log("[v0] Tạo thêm nhật ký với cấu hình:", {
@@ -4259,9 +4292,39 @@ export default function ReportEditorPage() {
                         id="images-per-page"
                         type="number"
                         min="1"
-                        max="12"
+                        max="20"
+                        step="1"
                         value={imagesPerPage}
-                        onChange={(e) => setImagesPerPage(Number(e.target.value))}
+                        onChange={(e) => {
+                          const value = Number(e.target.value)
+                          
+                          // Luôn cập nhật state để cho phép nhập
+                          setImagesPerPage(value)
+                          
+                          // Sử dụng hàm tính toán thông minh
+                          const calculation = calculateGridLayout({
+                            imagesPerPage: value,
+                            imagesPerRow: imagesPerRow
+                          })
+                          
+                          // Hiển thị lỗi nếu có (nhưng vẫn cho phép nhập)
+                          if (calculation.errors.length > 0) {
+                            toast({
+                              title: "Lỗi",
+                              description: calculation.errors[0],
+                              variant: "destructive",
+                            })
+                          }
+                          
+                          // Hiển thị cảnh báo nếu có
+                          if (calculation.warnings.length > 0) {
+                            toast({
+                              title: "Cảnh báo", 
+                              description: calculation.warnings[0],
+                              variant: "default",
+                            })
+                          }
+                        }}
                         className="bg-slate-700 border-slate-600 text-white"
                       />
                     </div>
@@ -4272,7 +4335,35 @@ export default function ReportEditorPage() {
                     <Label htmlFor="images-per-row" className="text-sm font-medium">
                       Số khung theo chiều ngang khổ giấy
                     </Label>
-                    <Select value={imagesPerRow.toString()} onValueChange={(value) => setImagesPerRow(Number(value))}>
+                    <Select value={imagesPerRow.toString()} onValueChange={(value) => {
+                      const newImagesPerRow = Number(value)
+                      
+                      // Sử dụng hàm tính toán thông minh
+                      const calculation = calculateGridLayout({
+                        imagesPerPage: imagesPerPage,
+                        imagesPerRow: newImagesPerRow
+                      })
+                      
+                      setImagesPerRow(newImagesPerRow)
+                      
+                      // Hiển thị lỗi nếu có
+                      if (calculation.errors.length > 0) {
+                        toast({
+                          title: "Lỗi",
+                          description: calculation.errors[0],
+                          variant: "destructive",
+                        })
+                      }
+                      
+                      // Hiển thị cảnh báo nếu có
+                      if (calculation.warnings.length > 0) {
+                        toast({
+                          title: "Cảnh báo",
+                          description: calculation.warnings[0],
+                          variant: "default",
+                        })
+                      }
+                    }}>
                       <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
                         <SelectValue placeholder="Chọn số khung ngang..." />
                       </SelectTrigger>
@@ -4283,6 +4374,45 @@ export default function ReportEditorPage() {
                         <SelectItem value="4">4 khung/hàng</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Thông tin tính toán real-time */}
+                  <div className="mt-4 p-3 bg-slate-800 rounded-lg border border-slate-600">
+                    <div className="text-sm text-slate-300">
+                      {(() => {
+                        const calculation = calculateGridLayout({
+                          imagesPerPage,
+                          imagesPerRow
+                        })
+                        
+                        if (calculation.errors.length > 0) {
+                          return (
+                            <div className="text-red-400">
+                              ❌ {calculation.errors[0]}
+                            </div>
+                          )
+                        }
+                        
+                        return (
+                          <div className="space-y-1">
+                            <div className="text-cyan-400 font-medium">
+                              📐 Layout: {calculation.rows} hàng × {calculation.cols} cột
+                            </div>
+                            <div className="text-slate-300">
+                              📏 Kích thước khung: {Math.round(calculation.cellWidth)}×{Math.round(calculation.cellHeight)}mm
+                            </div>
+                            <div className="text-slate-300">
+                              📄 Tổng kích thước: {Math.round(calculation.totalGridWidth)}×{Math.round(calculation.totalGridHeight)}mm
+                            </div>
+                            {calculation.warnings.length > 0 && (
+                              <div className="text-yellow-400">
+                                ⚠️ {calculation.warnings[0]}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })()}
+                    </div>
                   </div>
                 </>
               )}
