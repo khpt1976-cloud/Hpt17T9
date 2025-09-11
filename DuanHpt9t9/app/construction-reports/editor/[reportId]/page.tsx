@@ -2798,19 +2798,202 @@ export default function ReportEditorPage() {
   }
 
   const handleActualPrint = () => {
-    // Thêm class print-mode để kích hoạt CSS print styles
-    document.body.classList.add('print-mode')
+    // Tạo cửa sổ in mới với chỉ nội dung cần in
+    const printWindow = window.open('', '_blank', 'width=800,height=600')
     
-    // Đợi một chút để CSS được áp dụng
-    setTimeout(() => {
-      window.print()
+    if (printWindow) {
+      // Tạo HTML cho print với tất cả các trang
+      let printHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>In Nhật ký thi công</title>
+          <style>
+            @media print {
+              @page {
+                size: A4;
+                margin: 15mm;
+              }
+              
+              body {
+                margin: 0;
+                padding: 0;
+                background: white !important;
+                font-family: Arial, sans-serif;
+                font-size: 12pt;
+                line-height: 1.4;
+                color: black !important;
+              }
+              
+              .print-page {
+                width: 100%;
+                min-height: 250mm;
+                padding: 20mm;
+                background: white !important;
+                page-break-after: always;
+              }
+              
+              .print-page:last-child {
+                page-break-after: auto;
+              }
+              
+              .page-header {
+                text-align: center;
+                margin-bottom: 20px;
+                border-bottom: 2px solid #333;
+                padding-bottom: 10px;
+              }
+              
+              .page-title {
+                font-size: 18pt;
+                font-weight: bold;
+                margin-bottom: 5px;
+                color: black !important;
+              }
+              
+              .page-info {
+                font-size: 12pt;
+                color: #666 !important;
+              }
+              
+              .editor-content {
+                margin: 20px 0;
+                min-height: 150px;
+              }
+              
+              .image-grid {
+                display: grid !important;
+                gap: 10px;
+                margin: 20px 0;
+              }
+              
+              .image-item {
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                overflow: hidden;
+                page-break-inside: avoid;
+                margin-bottom: 10px;
+              }
+              
+              .image-item img {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+                object-fit: contain;
+              }
+              
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+            }
+            
+            @media screen {
+              body {
+                margin: 20px;
+                font-family: Arial, sans-serif;
+              }
+              
+              .print-page {
+                width: 210mm;
+                min-height: 297mm;
+                padding: 20mm;
+                margin: 0 auto 20px auto;
+                background: white;
+                box-shadow: 0 0 10px rgba(0,0,0,0.1);
+                border: 1px solid #ddd;
+              }
+              
+              .page-header {
+                text-align: center;
+                margin-bottom: 20px;
+                border-bottom: 2px solid #333;
+                padding-bottom: 10px;
+              }
+              
+              .image-grid {
+                display: grid;
+                gap: 10px;
+                margin: 20px 0;
+              }
+              
+              .image-item {
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                overflow: hidden;
+                margin-bottom: 10px;
+              }
+              
+              .image-item img {
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+                object-fit: contain;
+              }
+            }
+          </style>
+        </head>
+        <body>
+      `
       
-      // Xóa class sau khi in xong
-      setTimeout(() => {
-        document.body.classList.remove('print-mode')
-        setShowPrintPreview(false)
-      }, 1000)
-    }, 100)
+      // Thêm nội dung từng trang
+      for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+        const pageContent = pagesContent[pageNum] || ""
+        const hasImageConfig = imagePagesConfig[pageNum] && Object.keys(imagePagesConfig[pageNum]).length > 0
+        
+        printHTML += `
+          <div class="print-page">
+            <div class="page-header">
+              <h1 class="page-title">${reportName}</h1>
+              <p class="page-info">Trang ${pageNum} / ${totalPages}</p>
+            </div>
+            
+            <div class="page-content">
+        `
+        
+        if (hasImageConfig) {
+          // Trang ảnh
+          printHTML += '<div class="image-grid">'
+          const images = imagePagesConfig[pageNum]?.images || []
+          images.forEach((imageUrl, slotIndex) => {
+            if (imageUrl) {
+              printHTML += `
+                <div class="image-item">
+                  <img src="${imageUrl}" alt="Ảnh ${slotIndex + 1}" />
+                </div>
+              `
+            }
+          })
+          printHTML += '</div>'
+        } else {
+          // Trang text
+          printHTML += `<div class="editor-content">${pageContent}</div>`
+        }
+        
+        printHTML += `
+            </div>
+          </div>
+        `
+      }
+      
+      printHTML += `
+        </body>
+        </html>
+      `
+      
+      printWindow.document.write(printHTML)
+      printWindow.document.close()
+      
+      // Đợi ảnh load xong rồi mới in
+      printWindow.onload = () => {
+        setTimeout(() => {
+          printWindow.print()
+          printWindow.close()
+          setShowPrintPreview(false)
+        }, 1000)
+      }
+    }
   }
 
   const handleShare = () => {
@@ -4208,16 +4391,23 @@ export default function ReportEditorPage() {
                         {hasImageConfig ? (
                           /* Trang ảnh */
                           <div className="image-grid">
-                            {Object.entries(imagePagesConfig[pageNum] || {}).map(([slotIndex, imageUrl]) => (
-                              <div key={slotIndex} className="mb-4">
-                                <img 
-                                  src={imageUrl} 
-                                  alt={`Ảnh ${slotIndex}`}
-                                  className="max-w-full h-auto border"
-                                  style={{ maxHeight: '200px' }}
-                                />
-                              </div>
-                            ))}
+                            {(imagePagesConfig[pageNum]?.images || []).map((imageUrl, slotIndex) => {
+                              if (!imageUrl) return null
+                              return (
+                                <div key={slotIndex} className="image-item mb-4">
+                                  <img 
+                                    src={imageUrl} 
+                                    alt={`Ảnh ${slotIndex + 1}`}
+                                    className="max-w-full h-auto border"
+                                    style={{ maxHeight: '200px' }}
+                                    onError={(e) => {
+                                      console.error('Image load error:', imageUrl)
+                                      e.currentTarget.style.display = 'none'
+                                    }}
+                                  />
+                                </div>
+                              )
+                            })}
                           </div>
                         ) : (
                           /* Trang text */
