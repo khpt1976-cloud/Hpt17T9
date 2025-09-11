@@ -48,6 +48,41 @@ import FileManagement from "@/components/file-management"
 // Removed DocumentConfig interface - using TinyMCE only
 
 export default function ReportEditorPage() {
+  // Thêm CSS global để ẩn text "about:blank"
+  useEffect(() => {
+    const style = document.createElement('style')
+    style.textContent = `
+      @media print {
+        /* Ẩn text about:blank và các text không mong muốn khác */
+        body::before,
+        body::after,
+        html::before,
+        html::after {
+          display: none !important;
+          content: none !important;
+        }
+        
+        /* Ẩn header và footer mặc định của browser */
+        @page {
+          margin: 0;
+        }
+        
+        /* Ẩn URL và title trong print */
+        @page :first {
+          margin-top: 0;
+        }
+        
+        @page :last {
+          margin-bottom: 0;
+        }
+      }
+    `
+    document.head.appendChild(style)
+    
+    return () => {
+      document.head.removeChild(style)
+    }
+  }, [])
   const params = useParams()
   const reportId = params.reportId as string
   const { t } = useLanguage()
@@ -2806,6 +2841,7 @@ export default function ReportEditorPage() {
         <html>
         <head>
           <title></title>
+          <meta charset="utf-8">
           <style>
             @media print {
               @page {
@@ -2821,6 +2857,36 @@ export default function ReportEditorPage() {
                 font-size: 12pt;
                 line-height: 1.4;
                 color: black !important;
+              }
+              
+              /* Ẩn text about:blank và các text không mong muốn khác */
+              body::before,
+              body::after,
+              html::before,
+              html::after {
+                display: none !important;
+                content: none !important;
+              }
+              
+              /* Ẩn header và footer mặc định của browser */
+              @page {
+                margin-top: 0;
+                margin-bottom: 0;
+              }
+              
+              /* Ẩn tất cả text không mong muốn trong print */
+              * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+              }
+              
+              /* Ẩn URL, title, about:blank */
+              html:before,
+              html:after,
+              body:before, 
+              body:after {
+                content: "" !important;
+                display: none !important;
               }
               
               .print-page {
