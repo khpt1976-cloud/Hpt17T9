@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { LoginModal } from "@/components/login-modal"
 import { UserMenu } from "@/components/user-menu"
 
@@ -12,6 +13,7 @@ import { useLanguage } from "@/contexts/language-context"
 import { useAuth } from "@/contexts/auth-context"
 import { config } from "@/lib/config"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import {
   Play,
   FileText,
@@ -41,9 +43,13 @@ import {
 export default function HomePage() {
   const { language, setLanguage, t, isHydrated } = useLanguage()
   const { user, isAdmin } = useAuth()
+  const router = useRouter()
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [isVideoPlaying, setIsVideoPlaying] = useState(false)
   const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly")
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false)
+  const [password, setPassword] = useState("")
+  const [passwordError, setPasswordError] = useState("")
   const [logoUrl, setLogoUrl] = useState(
     "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Thi%E1%BA%BFt%20k%E1%BA%BF%20ch%C6%B0a%20c%C3%B3%20t%C3%AAn-2hrKzlEBNUsowunq4hgLzKZdV6sHWg.png",
   )
@@ -73,6 +79,29 @@ export default function HomePage() {
 
   const handlePlayVideo = () => {
     setIsVideoPlaying(true)
+  }
+
+  const handleDigitalAnalysisClick = () => {
+    setPasswordModalOpen(true)
+    setPassword("")
+    setPasswordError("")
+  }
+
+  const handlePasswordSubmit = () => {
+    if (password === "123456") {
+      setPasswordModalOpen(false)
+      setPassword("")
+      setPasswordError("")
+      router.push("/digital-analysis")
+    } else {
+      setPasswordError("Mật khẩu không đúng!")
+    }
+  }
+
+  const handlePasswordKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handlePasswordSubmit()
+    }
   }
 
   const getPricing = (plan: string) => {
@@ -159,11 +188,12 @@ export default function HomePage() {
                     <Calculator className="w-4 h-4" />
                     <span>{isHydrated ? t("services.design_calculation") : "Tính toán thiết kế"}</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 hover:bg-slate-700 cursor-pointer">
-                    <Link href="/digital-analysis" className="flex items-center space-x-2 w-full">
-                      <BarChart3 className="w-4 h-4" />
-                      <span>{isHydrated ? t("services.digital_analysis") : "Phân tích cách chơi"}</span>
-                    </Link>
+                  <DropdownMenuItem 
+                    className="flex items-center space-x-2 text-slate-300 hover:text-cyan-400 hover:bg-slate-700 cursor-pointer"
+                    onClick={handleDigitalAnalysisClick}
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    <span>{isHydrated ? t("services.digital_analysis") : "Phân tích cách chơi"}</span>
                   </DropdownMenuItem>
 
                 </DropdownMenuContent>
@@ -274,6 +304,45 @@ export default function HomePage() {
 
       {/* Login Modal */}
       <LoginModal open={loginModalOpen} onOpenChange={setLoginModalOpen} />
+
+      {/* Password Modal for Digital Analysis */}
+      <Dialog open={passwordModalOpen} onOpenChange={setPasswordModalOpen}>
+        <DialogContent className="sm:max-w-md bg-slate-800 border-slate-700">
+          <DialogHeader>
+            <DialogTitle className="text-cyan-400">Nhập mật khẩu</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-slate-300">Vui lòng nhập mật khẩu để truy cập "Phân tích cách chơi":</p>
+            <Input
+              type="password"
+              placeholder="Nhập mật khẩu..."
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyPress={handlePasswordKeyPress}
+              className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
+              autoFocus
+            />
+            {passwordError && (
+              <p className="text-red-400 text-sm">{passwordError}</p>
+            )}
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setPasswordModalOpen(false)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handlePasswordSubmit}
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600"
+              >
+                Xác nhận
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Hero Section */}
       <section className="py-20 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
