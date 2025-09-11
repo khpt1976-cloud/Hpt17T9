@@ -1,209 +1,129 @@
-# 🚀 DuanHpt9t9 + Botpress V12 Integration
+# DuanHpt11T9 - Construction Management System
 
-<div align="center">
+## 🚀 Tổng quan
+DuanHpt11T9 là phiên bản nâng cấp của hệ thống quản lý xây dựng với các tính năng bảo mật được cải thiện và giao diện người dùng tối ưu.
 
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=next.js&logoColor=white)
-![Botpress](https://img.shields.io/badge/Botpress-1A73E8?style=for-the-badge&logo=botpress&logoColor=white)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+## ✨ Tính năng chính
 
-**Tích hợp hoàn chỉnh giữa hệ thống quản lý xây dựng DuanHpt9t9 (Next.js) và nền tảng chatbot Botpress V12 qua Docker**
+### 🔐 Bảo mật nâng cao
+- **Password Protection**: Menu "Phân tích cách chơi" được bảo vệ bằng mật khẩu
+- **Mật khẩu mặc định**: `123456`
+- **Validation**: Kiểm tra mật khẩu với thông báo lỗi rõ ràng
 
-🔗 **Repository chính**: https://github.com/khpt1976-cloud/Hpt10T9
+### 🎨 Giao diện người dùng
+- Thiết kế responsive với Tailwind CSS
+- Theme tối/sáng
+- Modal đẹp mắt với animation
+- Hỗ trợ đa ngôn ngữ (Tiếng Việt/English)
 
-[🌟 Demo](#-truy-cập-hệ-thống) • [📖 Documentation](#-cấu-hình) • [🚀 Quick Start](#-khởi-động-nhanh-portable-deployment) • [🤝 Contributing](#-hỗ-trợ)
+### 🛠️ Công nghệ sử dụng
+- **Frontend**: Next.js 14, React, TypeScript
+- **Styling**: Tailwind CSS, Shadcn/ui
+- **State Management**: React Hooks
+- **Routing**: Next.js App Router
 
-</div>
+## 📦 Cài đặt
 
----
+### Yêu cầu hệ thống
+- Node.js 18.0+
+- npm hoặc yarn
+- Git
 
-## 🚀 Khởi động nhanh (Portable Deployment)
+### Bước cài đặt
+
+1. **Clone repository**
+```bash
+git clone https://github.com/khpt1976-cloud/DuanHpt11T9.git
+cd DuanHpt11T9/DuanHpt9t9
+```
+
+2. **Cài đặt dependencies**
+```bash
+npm install
+```
+
+3. **Chạy development server**
+```bash
+npm run dev
+```
+
+4. **Truy cập ứng dụng**
+```
+http://localhost:3000
+```
+
+## 🔑 Hướng dẫn sử dụng tính năng Password
+
+1. Click vào menu "Phân tích cách chơi"
+2. Nhập mật khẩu: `123456`
+3. Click "Xác nhận" hoặc nhấn Enter
+4. Hệ thống sẽ chuyển hướng đến trang phân tích
+
+## 📁 Cấu trúc dự án
+
+```
+DuanHpt11T9/
+├── DuanHpt9t9/                 # Main application
+│   ├── app/                    # Next.js App Router
+│   ├── components/             # React components
+│   ├── lib/                    # Utilities
+│   └── public/                 # Static files
+├── HuongdancaiDuanHpt/         # Installation guides
+├── BotpressV12/                # Botpress integration
+└── README.md                   # This file
+```
+
+## 🚀 Scripts
 
 ```bash
-# Clone repository
-git clone https://github.com/khpt1976-cloud/Hpt10T9.git
-cd Hpt10T9
-
-# Khởi động toàn bộ hệ thống với 1 lệnh
-./start.sh
-```
-
-## 📋 Yêu cầu hệ thống
-
-- Docker Engine 20.10+
-- Docker Compose 2.0+
-- 4GB RAM khả dụng
-- 10GB dung lượng ổ cứng
-
-## 🏗️ Kiến trúc hệ thống
-
-```
-┌─────────────────┐    ┌─────────────────┐
-│   DuanHpt9t9    │    │   Botpress V12  │
-│   (Next.js)     │◄──►│   (Chatbot)     │
-│   Port: 12000   │    │   Port: 12001   │
-└─────────────────┘    └─────────────────┘
-         │                       │
-         └───────────────────────┘
-              Docker Network
+npm run dev          # Development server
+npm run build        # Production build
+npm start            # Production server
+npm run lint         # Code linting
 ```
 
 ## 🔧 Cấu hình
 
-### Environment Variables
-
-Chỉnh sửa file `.env` để cấu hình:
+Tạo file `.env.local`:
 
 ```env
-# DuanHpt9t9 Configuration
-NEXTAUTH_URL=http://localhost:12000
-NEXTAUTH_SECRET=your-production-secret-key
-NEXT_PUBLIC_BOTPRESS_URL=http://localhost:12001
-
-# Botpress Configuration
-EXTERNAL_URL=http://localhost:12001
-DUAN_HPT_URL=http://duan_hpt:3000
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key
+DATABASE_URL=your-database-url
 ```
 
-### Ports
+## 📖 Tài liệu
 
-- **12000**: DuanHpt9t9 Construction Management System
-- **12001**: Botpress V12 Chatbot Platform
+- [Hướng dẫn cài đặt chi tiết](./HuongdancaiDuanHpt/HUONG_DAN_CAI_DAT_DUAN_HPT9T9.md)
+- [Hướng dẫn deployment](./DEPLOYMENT.md)
+- [Production guide](./PRODUCTION-GUIDE.md)
 
-## 🌐 Truy cập hệ thống
+## 🤝 Đóng góp
 
-### DuanHpt9t9 (Construction Management)
-- **Trang chủ**: http://localhost:12000
-- **Admin Panel**: http://localhost:12000/admin
-- **AdminBot Integration**: http://localhost:12000/admin/adminbot
+1. Fork repository
+2. Tạo feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Tạo Pull Request
 
-### Botpress V12 (Chatbot Platform)
-- **Chatbot Interface**: http://localhost:12001
-- **Admin Panel**: http://localhost:12001/admin
+## 📝 Changelog
 
-## 🔗 Tích hợp AdminBot
+### Version 11T9
+- ✅ Thêm bảo mật password cho menu "Phân tích cách chơi"
+- ✅ Cải thiện UI/UX với modal đẹp mắt
+- ✅ Thêm validation và error handling
+- ✅ Hỗ trợ Enter key để submit
+- ✅ Tạo hướng dẫn cài đặt chi tiết
 
-Hệ thống tích hợp seamless giữa DuanHpt9t9 và Botpress:
+## 📞 Liên hệ
 
-1. **Login** vào DuanHpt9t9
-2. **Truy cập Admin Panel** → `/admin`
-3. **Click AdminBot** trong sidebar
-4. **Giao diện Botpress** được nhúng trực tiếp
-
-### Tính năng AdminBot
-
-- ✅ Kiểm tra trạng thái Botpress real-time
-- ✅ Mở Admin Panel Botpress trong tab mới
-- ✅ Giao diện Botpress nhúng trong DuanHpt9t9
-- ✅ Thao tác nhanh và quản lý tập trung
-
-## 🐳 Docker Commands
-
-```bash
-# Khởi động services
-docker-compose up -d
-
-# Xem logs
-docker-compose logs -f
-
-# Dừng services
-docker-compose down
-
-# Rebuild và khởi động
-docker-compose up --build -d
-
-# Cleanup hoàn toàn
-docker-compose down -v
-docker system prune -f
-```
-
-## 📁 Cấu trúc thư mục
-
-```
-/workspace/
-├── DuanHpt9t9/                 # Next.js Construction Management
-│   ├── Dockerfile              # Multi-stage build
-│   ├── app/admin/adminbot/     # AdminBot integration page
-│   └── ...
-├── BotpressV12/                # Botpress V12 Chatbot
-│   ├── Dockerfile              # Multi-stage build
-│   └── ...
-├── docker-compose.yml          # Services orchestration
-├── .env                        # Environment variables
-├── start.sh                    # Deployment script
-└── README.md                   # Documentation
-```
-
-## 🔒 Bảo mật
-
-- Container chạy với non-root user
-- Network isolation giữa services
-- Environment variables được bảo vệ
-- CORS được cấu hình cho tích hợp
-
-## 🚨 Troubleshooting
-
-### Service không khởi động
-```bash
-# Kiểm tra logs
-docker-compose logs duan_hpt
-docker-compose logs botpress
-
-# Kiểm tra ports
-netstat -tulpn | grep :12000
-netstat -tulpn | grep :12001
-```
-
-### Botpress không kết nối
-```bash
-# Kiểm tra network
-docker network ls
-docker network inspect workspace_app_network
-
-# Test connectivity
-docker exec duan_hpt_container ping botpress
-```
-
-### Database issues
-```bash
-# Reset database
-docker-compose down -v
-docker-compose up -d
-```
-
-## 📞 Hỗ trợ
-
-- **GitHub Issues**: [DuanHpt9t9 Issues](https://github.com/khpt1976-cloud/DuanHpt9t9/issues)
-- **Email**: khpt1976@example.com
+- Repository: [https://github.com/khpt1976-cloud/DuanHpt11T9](https://github.com/khpt1976-cloud/DuanHpt11T9)
+- Issues: [https://github.com/khpt1976-cloud/DuanHpt11T9/issues](https://github.com/khpt1976-cloud/DuanHpt11T9/issues)
 
 ## 📄 License
 
-MIT License - Xem file LICENSE để biết thêm chi tiết.
+This project is licensed under the MIT License.
 
 ---
 
----
-
-## 🎯 **Tính năng nổi bật**
-
-- ✅ **Portable Deployment** - Chỉ 1 lệnh `./start.sh` khởi động toàn bộ hệ thống
-- ✅ **Seamless Integration** - AdminBot menu tích hợp trực tiếp trong DuanHpt9t9
-- ✅ **Docker Orchestration** - Multi-stage builds với networking tối ưu
-- ✅ **Production Ready** - Security, performance và monitoring
-- ✅ **Real-time Status** - Kiểm tra trạng thái Botpress real-time
-- ✅ **Cross-platform** - Chạy trên Linux, macOS, Windows
-
-## 🌟 **Screenshots**
-
-### DuanHpt9t9 Construction Management
-![DuanHpt9t9 Dashboard](https://via.placeholder.com/800x400/1f2937/ffffff?text=DuanHpt9t9+Dashboard)
-
-### AdminBot Integration
-![AdminBot Interface](https://via.placeholder.com/800x400/3b82f6/ffffff?text=AdminBot+Integration)
-
-### Botpress V12 Chatbot
-![Botpress Interface](https://via.placeholder.com/800x400/10b981/ffffff?text=Botpress+V12+Interface)
-
----
-
-**🚀 Portable Deployment** - Chỉ cần 1 lệnh `./start.sh` để khởi động toàn bộ hệ thống!
+**Made with ❤️ by HPT Team**
