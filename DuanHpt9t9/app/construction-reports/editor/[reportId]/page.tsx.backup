@@ -77,7 +77,6 @@ export default function ReportEditorPage() {
   const [dailyTemplate, setDailyTemplate] = useState<any>(null)
   // Đã xóa: const [uploadedImages, setUploadedImages] = useState<string[]>([])
   const [showShareModal, setShowShareModal] = useState(false)
-  const [showPrintPreview, setShowPrintPreview] = useState(false)
   const [shareEmails, setShareEmails] = useState<string[]>([])
   const [currentEmail, setCurrentEmail] = useState("")
   const [shareType, setShareType] = useState<"specific" | "all">("specific")
@@ -2794,23 +2793,373 @@ export default function ReportEditorPage() {
   }
 
   const handlePrint = () => {
-    setShowPrintPreview(true)
-  }
-
-  const handleActualPrint = () => {
-    // Thêm class print-mode để kích hoạt CSS print styles
-    document.body.classList.add('print-mode')
-    
-    // Đợi một chút để CSS được áp dụng
-    setTimeout(() => {
-      window.print()
+    // Tạo cửa sổ in mới
+    const printWindow = window.open('', '_blank', 'width=800,height=600')
       
-      // Xóa class sau khi in xong
-      setTimeout(() => {
-        document.body.classList.remove('print-mode')
-        setShowPrintPreview(false)
-      }, 1000)
-    }, 100)
+      if (printWindow) {
+        // Collect all pages content
+        let allPagesContent = ''
+        
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+          const pageContent = pagesContent[pageNum] || ''
+          const isImagePage = !!imagePagesConfig[pageNum]
+          const hasTextContent = pageContent && pageContent.trim() !== ''
+          
+          // Skip empty pages (no content and not image page)
+          if (!hasTextContent && !isImagePage) {
+            continue
+          }
+          
+          // ✅ FIX: Xử lý mixed content (trang có cả text và ảnh)
+          if (isImagePage && hasTextContent) {
+            // Render mixed content page (text + images)
+            const config = imagePagesConfig[pageNum]
+            const images = config?.images || []
+            const imagesPerRow = config?.imagesPerRow || 2
+
+            allPagesContent += `
+              <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
+                <div class="page-header">
+                  <div class="header-date"></div>
+                  <div class="header-title"></div>
+                  <div class="header-page"></div>
+                </div>
+                
+                <div class="page-content">
+                  <div class="content-header">
+                    <h1 class="document-title">${reportName}</h1>
+                  </div>
+                  
+                  <div class="document-content">
+                    ${pageContent}
+                  </div>
+                  
+                  <div class="content-header" style="margin-top: 20px;">
+                    <h3 class="section-title">Hình ảnh thi công</h3>
+                  </div>
+                  
+                  <div class="image-grid" style="display: grid; grid-template-columns: repeat(${imagesPerRow}, 1fr); gap: 15px; margin: 20px 0;">
+                    ${images.map((imageUrl, index) => `
+                      <div class="image-container">
+                        ${imageUrl ? `<img src="${imageUrl}" style="width: 100%; height: 150px; object-fit: cover; border: 1px solid #ddd; border-radius: 4px;" alt="Ảnh ${index + 1}">` : `<div style="width: 100%; height: 150px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px;">Ảnh ${index + 1}</div>`}
+                        <div style="text-align: center; margin-top: 5px; font-size: 11px; color: #666;">Ảnh ${index + 1}</div>
+                      </div>
+                    `).join('')}
+                  </div>
+                  
+                  <div class="page-footer">
+                    <div class="footer-left"></div>
+                    <div class="footer-center"></div>
+                    <div class="footer-right"></div>
+                  </div>
+                </div>
+              </div>
+            `
+          } else if (isImagePage) {
+            // Render image page
+            const config = imagePagesConfig[pageNum]
+            const images = config?.images || []
+            const imagesPerRow = config?.imagesPerRow || 2
+            
+            allPagesContent += `
+              <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
+                <div class="page-header">
+                  <div class="header-date"></div>
+                  <div class="header-title"></div>
+                  <div class="header-page"></div>
+                </div>
+                
+                <div class="page-content">
+                  <div class="content-header">
+                    <h1 class="document-title">${reportName}</h1>
+                    <h3 class="section-title">Hình ảnh thi công</h3>
+                  </div>
+                  
+                  <div class="image-grid" style="display: grid; grid-template-columns: repeat(${imagesPerRow}, 1fr); gap: 15px; margin: 20px 0;">
+                    ${images.map((imageUrl, index) => `
+                      <div class="image-container">
+                        ${imageUrl ? `
+                          <img src="${imageUrl}" alt="Ảnh ${index + 1}" class="construction-image" />
+                        ` : `
+                          <div class="empty-image-slot">
+                            <span></span>
+                          </div>
+                        `}
+                      </div>
+                    `).join('')}
+                  </div>
+                  
+                  <div class="page-footer">
+                    <div class="footer-left"></div>
+                    <div class="footer-center"></div>
+                    <div class="footer-right"></div>
+                  </div>
+                </div>
+              </div>
+            `
+          } else {
+            // Render text page
+            // ✅ FIX: Chỉ render trang nếu có nội dung thực sự
+            if (pageContent && pageContent.trim() !== '') {
+              const content = pageContent
+              allPagesContent += `
+                <div class="print-page ${pageNum > 1 ? 'page-break' : ''}">
+                  <div class="page-header">
+                    <div class="header-date"></div>
+                    <div class="header-title"></div>
+                    <div class="header-page"></div>
+                  </div>
+                  
+                  <div class="page-content">
+                    <div class="content-header">
+                      <h1 class="document-title">${reportName}</h1>
+                    </div>
+                    
+                    <div class="document-content">
+                      ${content}
+                    </div>
+                    
+                    <div class="page-footer">
+                      <div class="footer-left"></div>
+                      <div class="footer-center"></div>
+                      <div class="footer-right"></div>
+                    </div>
+                  </div>
+                </div>
+              `
+            }
+          }
+        }
+
+        printWindow.document.write(`
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>In nhật ký - ${reportName}</title>
+            <meta charset="UTF-8">
+            <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              
+              body { 
+                font-family: 'Times New Roman', serif;
+                font-size: 12pt;
+                line-height: 1.4;
+                color: #000;
+                background: white;
+              }
+              
+              @page {
+                size: A4;
+                margin: 20mm 15mm;
+              }
+              
+              .print-page {
+                width: 100%;
+                min-height: 100vh;
+                display: flex;
+                flex-direction: column;
+                position: relative;
+              }
+              
+              .page-break {
+                page-break-before: always;
+              }
+              
+              .page-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+                border-bottom: 1px solid #ddd;
+                margin-bottom: 20px;
+                font-size: 10pt;
+                color: #666;
+              }
+              
+              .header-date {
+                flex: 1;
+                text-align: left;
+              }
+              
+              .header-title {
+                flex: 1;
+                text-align: center;
+                font-weight: bold;
+                color: #000;
+              }
+              
+              .header-page {
+                flex: 1;
+                text-align: right;
+              }
+              
+              .page-content {
+                flex: 1;
+                padding: 0;
+                margin-top: 20px;
+              }
+              
+              .content-header {
+                text-align: center;
+                margin-bottom: 30px;
+              }
+              
+              .report-title {
+                color: #1e40af;
+                font-size: 20pt;
+                font-weight: bold;
+                margin-bottom: 8px;
+              }
+              
+              .document-title {
+                color: #1e40af;
+                font-size: 18pt;
+                font-weight: bold;
+                margin-bottom: 15px;
+              }
+              
+              .report-page, .document-info {
+                color: #666;
+                font-size: 12pt;
+                margin-bottom: 8px;
+              }
+              
+              .section-title {
+                color: #374151;
+                font-size: 14pt;
+                font-weight: bold;
+                margin-bottom: 20px;
+              }
+              
+              .image-grid {
+                max-width: 100%;
+                margin: 0 auto;
+              }
+              
+              .image-container {
+                aspect-ratio: 4/3;
+                border: 2px solid #ddd;
+                border-radius: 8px;
+                overflow: hidden;
+                background: #f9f9f9;
+                position: relative;
+              }
+              
+              .construction-image {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+              }
+              
+              .empty-image-slot {
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #999;
+                font-size: 11pt;
+                background: #f5f5f5;
+              }
+              
+              .page-footer {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 30px;
+                font-size: 10pt;
+                color: #666;
+                padding-top: 15px;
+                border-top: 1px solid #eee;
+              }
+              
+              .footer-left {
+                flex: 1;
+                text-align: left;
+              }
+              
+              .footer-center {
+                flex: 1;
+                text-align: center;
+              }
+              
+              .footer-right {
+                flex: 1;
+                text-align: right;
+              }
+              
+              .document-content {
+                line-height: 1.6;
+                font-size: 12pt;
+                text-align: justify;
+              }
+              
+              .document-content p {
+                margin-bottom: 12px;
+              }
+              
+              .document-content h1, .document-content h2, .document-content h3 {
+                margin: 20px 0 10px 0;
+                color: #333;
+              }
+              
+              .document-content ul, .document-content ol {
+                margin: 10px 0 10px 20px;
+              }
+              
+              .document-content li {
+                margin-bottom: 5px;
+              }
+              
+              @media print {
+                body { 
+                  margin: 0; 
+                  background: white;
+                  -webkit-print-color-adjust: exact;
+                  print-color-adjust: exact;
+                }
+                
+                .print-page {
+                  min-height: auto;
+                }
+                
+                .page-break {
+                  page-break-before: always;
+                }
+                
+                .image-container {
+                  break-inside: avoid;
+                }
+                
+                .construction-image {
+                  max-width: 100% !important;
+                  height: auto !important;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            ${allPagesContent}
+            <script>
+              window.onload = function() {
+                setTimeout(function() {
+                  window.print();
+                }, 1000);
+              }
+            </script>
+          </body>
+          </html>
+        `)
+        printWindow.document.close()
+      } else {
+        alert('Không thể mở cửa sổ in. Vui lòng cho phép popup trong trình duyệt.')
+      }
+    }
   }
 
   const handleShare = () => {
@@ -3454,129 +3803,7 @@ export default function ReportEditorPage() {
   }
 
   return (
-    <>
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          @media print {
-            .no-print, .sidebar, .toolbar, .navigation, .controls, .print-hide {
-              display: none !important;
-            }
-            
-            body {
-              margin: 0;
-              padding: 0;
-              background: white !important;
-              font-family: Arial, sans-serif;
-              font-size: 12pt;
-              line-height: 1.4;
-              color: black !important;
-            }
-            
-            .print-container {
-              width: 100% !important;
-              max-width: none !important;
-              margin: 0 !important;
-              padding: 0 !important;
-              background: white !important;
-            }
-            
-            .page-content {
-              page-break-after: always;
-              padding: 20mm;
-              min-height: 250mm;
-              background: white !important;
-            }
-            
-            .page-content:last-child {
-              page-break-after: auto;
-            }
-            
-            .page-header {
-              text-align: center;
-              margin-bottom: 20px;
-              border-bottom: 2px solid #333;
-              padding-bottom: 10px;
-            }
-            
-            .page-title {
-              font-size: 18pt;
-              font-weight: bold;
-              margin-bottom: 5px;
-              color: black !important;
-            }
-            
-            .page-info {
-              font-size: 12pt;
-              color: #666 !important;
-            }
-            
-            .editor-content {
-              margin: 20px 0;
-              min-height: 150px;
-            }
-            
-            .image-grid {
-              display: grid !important;
-              gap: 10px;
-              margin: 20px 0;
-            }
-            
-            .image-item {
-              border: 1px solid #ddd;
-              border-radius: 4px;
-              overflow: hidden;
-              page-break-inside: avoid;
-            }
-            
-            .image-item img {
-              width: 100%;
-              height: auto;
-              max-height: 80mm;
-              object-fit: contain;
-            }
-            
-            * {
-              -webkit-print-color-adjust: exact !important;
-              color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-            
-            @page {
-              size: A4;
-              margin: 15mm;
-            }
-            
-            /* Print preview styles */
-            .print-preview-content {
-              width: 100% !important;
-              margin: 0 !important;
-              padding: 0 !important;
-            }
-            
-            .print-page {
-              width: 100% !important;
-              margin: 0 !important;
-              padding: 20mm !important;
-              background: white !important;
-              box-shadow: none !important;
-              border: none !important;
-              page-break-after: always;
-            }
-            
-            .print-page:last-child {
-              page-break-after: auto;
-            }
-          }
-          
-          @media screen {
-            .print-only {
-              display: none;
-            }
-          }
-        `
-      }} />
-      
-      <div className="min-h-screen bg-slate-100 flex print-container">
+    <div className="min-h-screen bg-slate-100 flex">
       <div className="w-80 bg-gradient-to-b from-teal-900 to-slate-900 flex flex-col text-white no-print sidebar">
         {/* Header */}
         <div className="p-4 border-b border-teal-700/30">
@@ -3678,7 +3905,7 @@ export default function ReportEditorPage() {
       </div>
 
       {/* TINYMCE EDITOR MỚI - TÍCH HỢP HOÀN CHỈNH */}
-      <div className="flex-1 flex flex-col print-container">
+      <div className="flex-1 flex flex-col">
         {/* Thanh công cụ mới */}
         <div className="bg-blue-600 px-6 py-3 flex items-center gap-4 no-print toolbar">
           <div className="flex items-center gap-2">
@@ -3828,14 +4055,8 @@ export default function ReportEditorPage() {
               return shouldUseImageEditor
             })() ? (
               /* Trang ảnh - Dùng Custom Image Grid với container A4 */
-              <div className="a4-page-container page-content">
-                {/* Header cho in */}
-                <div className="print-only page-header">
-                  <h1 className="page-title">{reportName}</h1>
-                  <p className="page-info">Trang {currentPage} / {totalPages}</p>
-                </div>
-                
-                <div className="a4-page image-grid">
+              <div className="a4-page-container">
+                <div className="a4-page">
                   <ImageGridEditor
                 pageNumber={currentPage}
                 imagesPerPage={imagePagesConfig[currentPage].imagesPerPage}
@@ -3871,14 +4092,8 @@ export default function ReportEditorPage() {
               </div>
             ) : (
               /* Trang text - Dùng TinyMCE với container linh hoạt */
-              <div className="p-4 bg-gray-50 page-content">
-                {/* Header cho in */}
-                <div className="print-only page-header">
-                  <h1 className="page-title">{reportName}</h1>
-                  <p className="page-info">Trang {currentPage} / {totalPages}</p>
-                </div>
-                
-                <div className="h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden relative editor-content">
+              <div className="p-4 bg-gray-50">
+                <div className="h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden relative">
                   <TinyMCENewEditor
                 value={editorContent}
                 onChange={setEditorContent}
@@ -4158,72 +4373,6 @@ export default function ReportEditorPage() {
                 >
                   {t("editor.share.share")}
                 </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Print Preview Modal */}
-      {showPrintPreview && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-[90vw] h-[90vh] max-w-4xl flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold text-gray-800">Xem trước khi in</h3>
-              <div className="flex gap-2">
-                <Button onClick={handleActualPrint} className="bg-blue-600 hover:bg-blue-700">
-                  <Printer className="w-4 h-4 mr-2" />
-                  In tài liệu
-                </Button>
-                <Button onClick={() => setShowPrintPreview(false)} variant="outline">
-                  Đóng
-                </Button>
-              </div>
-            </div>
-            
-            <div className="flex-1 overflow-auto p-4 bg-gray-100">
-              <div className="print-preview-content">
-                {/* Render tất cả các trang */}
-                {Array.from({ length: totalPages }, (_, index) => {
-                  const pageNum = index + 1
-                  const pageContent = pagesContent[pageNum] || ""
-                  const hasImageConfig = imagePagesConfig[pageNum] && Object.keys(imagePagesConfig[pageNum]).length > 0
-                  
-                  return (
-                    <div key={pageNum} className="print-page bg-white shadow-lg mb-4 mx-auto" style={{ width: '210mm', minHeight: '297mm', padding: '20mm' }}>
-                      {/* Header cho mỗi trang */}
-                      <div className="page-header mb-4 pb-2 border-b">
-                        <h1 className="text-xl font-bold">{reportName}</h1>
-                        <p className="text-sm text-gray-600">Trang {pageNum} / {totalPages}</p>
-                      </div>
-                      
-                      {/* Nội dung trang */}
-                      <div className="page-content">
-                        {hasImageConfig ? (
-                          /* Trang ảnh */
-                          <div className="image-grid">
-                            {Object.entries(imagePagesConfig[pageNum] || {}).map(([slotIndex, imageUrl]) => (
-                              <div key={slotIndex} className="mb-4">
-                                <img 
-                                  src={imageUrl} 
-                                  alt={`Ảnh ${slotIndex}`}
-                                  className="max-w-full h-auto border"
-                                  style={{ maxHeight: '200px' }}
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          /* Trang text */
-                          <div 
-                            className="editor-content"
-                            dangerouslySetInnerHTML={{ __html: pageContent }}
-                          />
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
               </div>
             </div>
           </div>
@@ -4936,6 +5085,5 @@ export default function ReportEditorPage() {
       {/* TOASTER COMPLETELY DISABLED to prevent red notification boxes */}
       {/* <Toaster /> */}
     </div>
-    </>
   )
 }

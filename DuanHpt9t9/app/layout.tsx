@@ -2,12 +2,8 @@ import type React from "react"
 import type { Metadata } from "next"
 import { LanguageProvider } from "@/contexts/language-context"
 import { AuthProvider } from "@/contexts/auth-context"
-import PrintHandler from "@/components/print-handler"
 import "./globals.css"
 import "../styles/construction-report.css"
-import "../styles/print.css"
-import "../styles/print-layout.css"
-import "../styles/print-override.css"
 
 export const metadata: Metadata = {
   title: "ConstructVN - Construction Management System",
@@ -23,7 +19,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <PrintHandler />
         <LanguageProvider>
           <AuthProvider>{children}</AuthProvider>
         </LanguageProvider>
