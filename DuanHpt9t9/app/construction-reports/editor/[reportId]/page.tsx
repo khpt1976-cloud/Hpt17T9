@@ -2975,6 +2975,11 @@ export default function ReportEditorPage() {
   // Xác nhận xóa trang
   // Helper functions for multiple page selection
   const togglePageSelection = (pageNum: number) => {
+    // Không cho phép chọn trang 1 (trang mặc định)
+    if (pageNum === 1) {
+      return
+    }
+    
     setSelectedPagesToDelete(prev => {
       if (prev.includes(pageNum)) {
         return prev.filter(p => p !== pageNum)
@@ -2989,7 +2994,8 @@ export default function ReportEditorPage() {
       setSelectedPagesToDelete([])
       setSelectAllPages(false)
     } else {
-      const allPages = Array.from({ length: totalPages }, (_, i) => i + 1)
+      // Chọn tất cả trang NGOẠI TRỪ trang 1 (trang mặc định không được xóa)
+      const allPages = Array.from({ length: totalPages }, (_, i) => i + 1).filter(page => page !== 1)
       setSelectedPagesToDelete(allPages)
       setSelectAllPages(true)
     }
@@ -4529,7 +4535,7 @@ export default function ReportEditorPage() {
               {/* Header với thông tin và nút chọn tất cả */}
               <div className="flex items-center justify-between">
                 <p className="text-gray-600">
-                  Chọn trang muốn xóa: ({selectedPagesToDelete.length}/{totalPages})
+                  Chọn trang muốn xóa: ({selectedPagesToDelete.length}/{totalPages - 1})
                 </p>
                 <div className="flex items-center space-x-2">
                   <input
@@ -4545,29 +4551,45 @@ export default function ReportEditorPage() {
                 </div>
               </div>
               
+              {/* Thông báo về trang 1 */}
+              <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                <p className="text-blue-800 text-sm">
+                  ℹ️ Trang 1 là trang mặc định và không thể xóa.
+                </p>
+              </div>
+              
               {/* Grid các trang */}
               <div className="grid grid-cols-6 gap-2 max-h-48 overflow-y-auto border rounded p-3 bg-gray-50">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                  <div key={pageNum} className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={`page-${pageNum}`}
-                      checked={selectedPagesToDelete.includes(pageNum)}
-                      onChange={() => togglePageSelection(pageNum)}
-                      className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
-                    />
-                    <label 
-                      htmlFor={`page-${pageNum}`}
-                      className={`flex-1 text-center py-2 px-3 rounded border text-sm font-medium cursor-pointer transition-all ${
-                        selectedPagesToDelete.includes(pageNum)
-                          ? "border-red-500 bg-red-50 text-red-600"
-                          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50"
-                      }`}
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                  const isPage1 = pageNum === 1
+                  return (
+                    <div key={pageNum} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`page-${pageNum}`}
+                        checked={selectedPagesToDelete.includes(pageNum)}
+                        onChange={() => togglePageSelection(pageNum)}
+                        disabled={isPage1}
+                        className={`w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500 ${
+                          isPage1 ? 'opacity-50 cursor-not-allowed' : ''
+                        }`}
+                      />
+                      <label 
+                        htmlFor={`page-${pageNum}`}
+                        className={`flex-1 text-center py-2 px-3 rounded border text-sm font-medium transition-all ${
+                          isPage1 
+                            ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : selectedPagesToDelete.includes(pageNum)
+                              ? "border-red-500 bg-red-50 text-red-600 cursor-pointer"
+                              : "border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 cursor-pointer"
+                        }`}
                     >
                       {pageNum}
+                      {isPage1 && <span className="text-xs block text-gray-400">(Mặc định)</span>}
                     </label>
                   </div>
-                ))}
+                  )
+                })}
               </div>
 
               {/* Thông báo cảnh báo */}
@@ -4584,22 +4606,30 @@ export default function ReportEditorPage() {
               <div className="border-t pt-4">
                 <p className="text-sm text-gray-500 mb-2">Hoặc chọn nhanh một trang:</p>
                 <div className="grid grid-cols-8 gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      onClick={() => {
-                        setSelectedPagesToDelete([pageNum])
-                        setSelectAllPages(false)
-                      }}
-                      className={`w-8 h-8 rounded border text-xs font-medium transition-all ${
-                        selectedPagesToDelete.length === 1 && selectedPagesToDelete[0] === pageNum
-                          ? "border-red-500 bg-red-50 text-red-600"
-                          : "border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50"
-                      }`}
-                    >
-                      {pageNum}
-                    </button>
-                  ))}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                    const isPage1 = pageNum === 1
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => {
+                          if (!isPage1) {
+                            setSelectedPagesToDelete([pageNum])
+                            setSelectAllPages(false)
+                          }
+                        }}
+                        disabled={isPage1}
+                        className={`w-8 h-8 rounded border text-xs font-medium transition-all ${
+                          isPage1
+                            ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : selectedPagesToDelete.length === 1 && selectedPagesToDelete[0] === pageNum
+                              ? "border-red-500 bg-red-50 text-red-600"
+                              : "border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50"
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    )
+                  })}
                 </div>
               </div>
             </div>
