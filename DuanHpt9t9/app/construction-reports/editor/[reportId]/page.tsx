@@ -2864,23 +2864,29 @@ export default function ReportEditorPage() {
               .image-grid {
                 display: grid !important;
                 grid-template-columns: repeat(2, 1fr) !important;
-                gap: 10px;
-                margin: 20px 0;
+                gap: 10px !important;
+                margin: 20px 0 !important;
+                justify-content: center !important;
+                align-items: center !important;
+                width: 100% !important;
               }
               
               .image-item {
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                overflow: hidden;
-                page-break-inside: avoid;
-                margin-bottom: 10px;
+                border: 1px solid #ddd !important;
+                border-radius: 4px !important;
+                overflow: hidden !important;
+                page-break-inside: avoid !important;
+                margin-bottom: 10px !important;
+                width: 100% !important;
+                height: auto !important;
               }
               
               .image-item img {
-                width: 100%;
-                height: auto;
-                max-height: 200px;
-                object-fit: contain;
+                width: 100% !important;
+                height: auto !important;
+                max-height: 200px !important;
+                object-fit: contain !important;
+                display: block !important;
               }
               
               * {
@@ -2918,6 +2924,9 @@ export default function ReportEditorPage() {
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
                 margin: 20px 0;
+                justify-content: center;
+                align-items: center;
+                width: 100%;
               }
               
               .image-item {
@@ -2925,6 +2934,8 @@ export default function ReportEditorPage() {
                 border-radius: 4px;
                 overflow: hidden;
                 margin-bottom: 10px;
+                width: 100%;
+                height: auto;
               }
               
               .image-item img {
@@ -2932,6 +2943,7 @@ export default function ReportEditorPage() {
                 height: auto;
                 max-height: 200px;
                 object-fit: contain;
+                display: block;
               }
             }
           </style>
@@ -4392,17 +4404,31 @@ export default function ReportEditorPage() {
                       {/* Nội dung trang */}
                       <div className="page-content">
                         {hasImageConfig ? (
-                          /* Trang ảnh */
-                          <div className="image-grid">
+                          /* Trang ảnh - SỬ DỤNG LAYOUT CHUẨN */
+                          <div className="image-grid" style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(2, 1fr)',
+                            gap: '10px',
+                            margin: '20px 0'
+                          }}>
                             {(imagePagesConfig[pageNum]?.images || []).map((imageUrl, slotIndex) => {
                               if (!imageUrl) return null
                               return (
-                                <div key={slotIndex} className="image-item mb-4">
+                                <div key={slotIndex} className="image-item" style={{
+                                  border: '1px solid #ddd',
+                                  borderRadius: '4px',
+                                  overflow: 'hidden',
+                                  marginBottom: '10px'
+                                }}>
                                   <img 
                                     src={imageUrl} 
                                     alt={`Ảnh ${slotIndex + 1}`}
-                                    className="max-w-full h-auto border"
-                                    style={{ maxHeight: '200px' }}
+                                    style={{
+                                      width: '100%',
+                                      height: 'auto',
+                                      maxHeight: '200px',
+                                      objectFit: 'contain'
+                                    }}
                                     onError={(e) => {
                                       console.error('Image load error:', imageUrl)
                                       e.currentTarget.style.display = 'none'
