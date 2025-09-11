@@ -2863,6 +2863,7 @@ export default function ReportEditorPage() {
               
               .image-grid {
                 display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
                 gap: 10px;
                 margin: 20px 0;
               }
@@ -2914,6 +2915,7 @@ export default function ReportEditorPage() {
               
               .image-grid {
                 display: grid;
+                grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
                 margin: 20px 0;
               }
@@ -3706,6 +3708,7 @@ export default function ReportEditorPage() {
             
             .image-grid {
               display: grid !important;
+              grid-template-columns: repeat(2, 1fr) !important;
               gap: 10px;
               margin: 20px 0;
             }
