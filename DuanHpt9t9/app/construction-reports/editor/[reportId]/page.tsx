@@ -2120,7 +2120,7 @@ export default function ReportEditorPage() {
           tempDiv.innerHTML = `
             <div style="text-align: center; margin-bottom: 15px;">
               <h2 style="color: #1d4ed8; font-size: 20px; margin: 0 0 8px 0;">Báo cáo thi công</h2>
-              <p style="margin: 0 0 8px 0; font-size: 14px; color: #666;">Trang ${pageNum}</p>
+
               <h3 style="font-size: 16px; margin: 0; color: #333;">Hình ảnh thi công</h3>
             </div>
             
@@ -2193,9 +2193,7 @@ export default function ReportEditorPage() {
               `).join('')}
             </div>
             
-            <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px solid #ccc; color: #666; font-size: 12px;">
-              Trang ${pageNum} - 4 ảnh thi công
-            </div>
+
           `
           
           document.body.appendChild(tempDiv)
@@ -2304,7 +2302,7 @@ export default function ReportEditorPage() {
                     </div>
                     <div class="header-right">
                       <div class="page-info">
-                        Trang ${pageNum}/${totalPages}<br>
+                        
                         <small>${new Date().toLocaleDateString('vi-VN')}</small>
                       </div>
                     </div>
@@ -2312,7 +2310,7 @@ export default function ReportEditorPage() {
                   
                   <div class="pdf-content">
                     <div class="section-header">
-                      <h2>NỘI DUNG TRANG ${pageNum}</h2>
+                      <h2></h2>
                       <div class="section-line"></div>
                     </div>
                     
@@ -2336,7 +2334,7 @@ export default function ReportEditorPage() {
                   
                   <div class="pdf-footer">
                     <div class="footer-left">Nhật ký thi công - ${reportName}</div>
-                    <div class="footer-center">Trang ${pageNum} / ${totalPages}</div>
+                    <div class="footer-center"></div>
                     <div class="footer-right">${new Date().toLocaleDateString('vi-VN')}</div>
                   </div>
                 </div>
@@ -2378,7 +2376,7 @@ export default function ReportEditorPage() {
                   </div>
                   <div class="header-right">
                     <div class="page-info">
-                      Trang ${pageNum}/${totalPages}<br>
+                      
                       <small>${new Date().toLocaleDateString('vi-VN')}</small>
                     </div>
                   </div>
@@ -2410,14 +2408,14 @@ export default function ReportEditorPage() {
                   
                   <div class="summary-section">
                     <div class="summary-box">
-                      <strong>Tóm tắt:</strong> Trang ${pageNum} - ${squareImages.filter(img => img).length} ảnh đã chụp / ${squareImages.length} vị trí (Đã xử lý thành hình vuông)
+                      <strong>Tóm tắt:</strong> ${squareImages.filter(img => img).length} ảnh đã chụp / ${squareImages.length} vị trí (Đã xử lý thành hình vuông)
                     </div>
                   </div>
                 </div>
                 
                 <div class="pdf-footer">
                   <div class="footer-left">Nhật ký thi công - ${reportName}</div>
-                  <div class="footer-center">Trang ${pageNum} / ${totalPages}</div>
+                  <div class="footer-center"></div>
                   <div class="footer-right">${new Date().toLocaleDateString('vi-VN')}</div>
                 </div>
               </div>
@@ -2442,7 +2440,7 @@ export default function ReportEditorPage() {
                     </div>
                     <div class="header-right">
                       <div class="page-info">
-                        Trang ${pageNum}/${totalPages}<br>
+                        
                         <small>${new Date().toLocaleDateString('vi-VN')}</small>
                       </div>
                     </div>
@@ -2450,7 +2448,7 @@ export default function ReportEditorPage() {
                   
                   <div class="pdf-content">
                     <div class="section-header">
-                      <h2>NỘI DUNG TRANG ${pageNum}</h2>
+                      <h2></h2>
                       <div class="section-line"></div>
                     </div>
                     
@@ -2461,7 +2459,7 @@ export default function ReportEditorPage() {
                   
                   <div class="pdf-footer">
                     <div class="footer-left">Nhật ký thi công - ${reportName}</div>
-                    <div class="footer-center">Trang ${pageNum} / ${totalPages}</div>
+                    <div class="footer-center"></div>
                     <div class="footer-right">${new Date().toLocaleDateString('vi-VN')}</div>
                   </div>
                 </div>
@@ -2807,7 +2805,7 @@ export default function ReportEditorPage() {
         <!DOCTYPE html>
         <html>
         <head>
-          <title>In Nhật ký thi công</title>
+          <title></title>
           <style>
             @media print {
               @page {
@@ -2977,7 +2975,6 @@ export default function ReportEditorPage() {
           <div class="print-page">
             <div class="page-header">
               <h1 class="page-title">${reportName}</h1>
-              <p class="page-info">Trang ${pageNum} / ${totalPages}</p>
             </div>
             
             <div class="page-content">
@@ -4005,7 +4002,6 @@ export default function ReportEditorPage() {
             </Button>
           </div>
           <div className="ml-auto text-white text-sm">
-            Trang {currentPage}/{totalPages}
           </div>
         </div>
 
@@ -4053,7 +4049,7 @@ export default function ReportEditorPage() {
                 {/* Header cho in */}
                 <div className="print-only page-header">
                   <h1 className="page-title">{reportName}</h1>
-                  <p className="page-info">Trang {currentPage} / {totalPages}</p>
+                  
                 </div>
                 
                 <div className="a4-page image-grid">
@@ -4086,7 +4082,7 @@ export default function ReportEditorPage() {
                 {/* Số trang cho ImageGrid - ngoài container A4 */}
                 <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 shadow-lg no-print">
                   <span className="text-sm font-medium text-gray-700">
-                    Trang {currentPage} / {totalPages}
+                    
                   </span>
                 </div>
               </div>
@@ -4096,7 +4092,7 @@ export default function ReportEditorPage() {
                 {/* Header cho in */}
                 <div className="print-only page-header">
                   <h1 className="page-title">{reportName}</h1>
-                  <p className="page-info">Trang {currentPage} / {totalPages}</p>
+                  
                 </div>
                 
                 <div className="h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden relative editor-content">
@@ -4111,7 +4107,7 @@ export default function ReportEditorPage() {
                   {/* Số trang cho TinyMCE */}
                   <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg px-3 py-2 shadow-lg no-print">
                     <span className="text-sm font-medium text-gray-700">
-                      Trang {currentPage} / {totalPages}
+                      
                     </span>
                   </div>
                 </div>
@@ -4172,7 +4168,7 @@ export default function ReportEditorPage() {
         <div className="bg-gray-100 px-6 py-2 border-t border-gray-200">
           <div className="flex justify-between items-center text-sm text-gray-600">
             <span>📝 {reportName}</span>
-            <span>Trang {currentPage} / {totalPages} | Cập nhật: {currentTime}</span>
+            <span> | Cập nhật: {currentTime}</span>
           </div>
         </div>
       </div>
@@ -4415,7 +4411,6 @@ export default function ReportEditorPage() {
                       {/* Header cho mỗi trang */}
                       <div className="page-header mb-4 pb-2 border-b">
                         <h1 className="text-xl font-bold">{reportName}</h1>
-                        <p className="text-sm text-gray-600">Trang {pageNum} / {totalPages}</p>
                       </div>
                       
                       {/* Nội dung trang */}
