@@ -2831,6 +2831,9 @@ export default function ReportEditorPage() {
                 padding: 20mm;
                 background: white !important;
                 page-break-after: always;
+                box-sizing: border-box;
+                position: relative;
+                margin: 0 auto;
               }
               
               .print-page:last-child {
@@ -2865,10 +2868,12 @@ export default function ReportEditorPage() {
                 display: grid !important;
                 grid-template-columns: repeat(2, 1fr) !important;
                 gap: 10px !important;
-                margin: 20px 0 !important;
+                margin: 20px auto !important;
                 justify-content: center !important;
-                align-items: center !important;
+                align-items: start !important;
                 width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box !important;
               }
               
               .image-item {
@@ -2879,6 +2884,8 @@ export default function ReportEditorPage() {
                 margin-bottom: 10px !important;
                 width: 100% !important;
                 height: auto !important;
+                box-sizing: border-box !important;
+                position: relative !important;
               }
               
               .image-item img {
@@ -2923,10 +2930,12 @@ export default function ReportEditorPage() {
                 display: grid;
                 grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
-                margin: 20px 0;
+                margin: 20px auto;
                 justify-content: center;
-                align-items: center;
+                align-items: start;
                 width: 100%;
+                max-width: 100%;
+                box-sizing: border-box;
               }
               
               .image-item {
@@ -2936,6 +2945,8 @@ export default function ReportEditorPage() {
                 margin-bottom: 10px;
                 width: 100%;
                 height: auto;
+                box-sizing: border-box;
+                position: relative;
               }
               
               .image-item img {
