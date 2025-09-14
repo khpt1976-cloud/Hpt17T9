@@ -980,53 +980,44 @@ export default function ReportEditorPage() {
     })
   }
 
-  const handleSave = (isAutoSave = false) => {
+  const handleSave = async (isAutoSave = false) => {
     try {
       if (isAutoSave) {
         setAutoSaveStatus("saving")
       }
 
-      // Save TinyMCE content to localStorage
-      const existingReports = JSON.parse(localStorage.getItem("construction-reports") || "[]")
-      const reportIndex = existingReports.findIndex((r: any) => r.id === reportId)
-      
-      let reportData
-      if (reportIndex >= 0) {
-        reportData = existingReports[reportIndex]
-        if (!reportData.pages) reportData.pages = {}
-        reportData.pages[currentPage] = editorContent
-        reportData.lastModified = new Date().toISOString()
-      } else {
-        reportData = {
-          id: reportId,
-          title: reportName,
-          pages: { [currentPage]: editorContent },
-          lastModified: new Date().toISOString(),
-          createdAt: new Date().toISOString()
-        }
-        existingReports.push(reportData)
+      console.log(`💾 [HANDLE SAVE] Starting ${isAutoSave ? 'auto' : 'manual'} save for page ${currentPage}`)
+
+      // ✅ UNIFIED SAVE: Update current page content first
+      const updatedPagesContent = {
+        ...pagesContent,
+        [currentPage]: editorContent
       }
       
-      localStorage.setItem("construction-reports", JSON.stringify(existingReports))
+      // Update state immediately
+      setPagesContent(updatedPagesContent)
+      
+      // ✅ FULL SAVE: Use manualSaveToLocalStorage with complete data
+      await manualSaveToLocalStorage(totalPages, imagePagesConfig, updatedPagesContent)
       
       if (isAutoSave) {
         setAutoSaveStatus("saved")
         setLastAutoSave(new Date())
         // Reset status after 3 seconds
         setTimeout(() => setAutoSaveStatus("idle"), 3000)
+        console.log(`✅ [HANDLE SAVE] Auto-save completed for page ${currentPage}`)
       } else {
-        // Show success message for manual save - NO TOAST to prevent red boxes
-        console.log("✅ Manual save successful for page", currentPage)
-        // COMPLETELY DISABLED TOAST to prevent red notification boxes
-        // Use browser alert as fallback if needed
-        if (window.confirm) {
-          // Silent success - no notification to prevent red boxes
-        }
+        console.log(`✅ [HANDLE SAVE] Manual save completed for page ${currentPage}`)
+        console.log(`✅ [HANDLE SAVE] Saved data includes:`, {
+          totalPages,
+          pagesCount: Object.keys(updatedPagesContent).length,
+          imagePagesCount: Object.keys(imagePagesConfig).length,
+          currentPageContent: editorContent.length > 0 ? 'Has content' : 'Empty'
+        })
       }
       
-      console.log("Content saved successfully:", reportData)
     } catch (error) {
-      console.error("❌ Error saving document:", error)
+      console.error(`❌ [HANDLE SAVE] Error during ${isAutoSave ? 'auto' : 'manual'} save:`, error)
       
       if (isAutoSave) {
         setAutoSaveStatus("error")
@@ -1034,7 +1025,7 @@ export default function ReportEditorPage() {
       } else {
         console.error("Manual save failed:", error)
         // Disable error toast to prevent red notification box
-        console.warn("Save error (toast disabled):", error.message)
+        console.warn("Save error (toast disabled):", error instanceof Error ? error.message : 'Unknown error')
       }
     }
   }
