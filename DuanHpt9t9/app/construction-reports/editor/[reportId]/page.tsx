@@ -95,7 +95,7 @@ export default function ReportEditorPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [currentPage, setCurrentPage] = useState(1)
   const [mockContent, setMockContent] = useState("Đây là nội dung của trang")
-  const [templateContent, setTemplateContent] = useState<string>("")
+  // ❌ REMOVED: templateContent (không cần thiết)
   const [templateLoading, setTemplateLoading] = useState(false)
   
   // State cho quản lý trang
@@ -104,12 +104,7 @@ export default function ReportEditorPage() {
   const [pageToDelete, setPageToDelete] = useState<number | null>(null)
   const [selectedPagesToDelete, setSelectedPagesToDelete] = useState<number[]>([])
   const [selectAllPages, setSelectAllPages] = useState(false)
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string>("")
-  const [availableTemplates, setAvailableTemplates] = useState<any[]>([])
-  const [initialTemplateId, setInitialTemplateId] = useState<string>("")
-  const [dailyTemplateId, setDailyTemplateId] = useState<string>("")
-  const [initialTemplate, setInitialTemplate] = useState<any>(null)
-  const [dailyTemplate, setDailyTemplate] = useState<any>(null)
+  // ❌ REMOVED: Template-related states (không cần thiết khi không dùng Word templates)
   // Đã xóa: const [uploadedImages, setUploadedImages] = useState<string[]>([])
   const [showShareModal, setShowShareModal] = useState(false)
   const [showPrintPreview, setShowPrintPreview] = useState(false)
@@ -128,17 +123,15 @@ export default function ReportEditorPage() {
   
   // Add Diary Dialog states
   const [showAddDiaryDialog, setShowAddDiaryDialog] = useState(false)
-  const [selectedTemplate, setSelectedTemplate] = useState("")
+  // ❌ REMOVED: selectedTemplate state (không cần thiết)
   const [imagePages, setImagePages] = useState(1)
   const [imagesPerPage, setImagesPerPage] = useState(4)
   const [imagesPerRow, setImagesPerRow] = useState(2)
   const [saveAsDefault, setSaveAsDefault] = useState(false)
   const [useImagePages, setUseImagePages] = useState(true)
   
-  // Existing diaries for template selection
-  const [existingDiaries, setExistingDiaries] = useState<any[]>([])
-  const [selectedDiaryId, setSelectedDiaryId] = useState("")
-  const [useTemplate, setUseTemplate] = useState(false)
+  // ❌ REMOVED: existingDiaries state (không cần thiết)
+  // ❌ REMOVED: selectedDiaryId, useTemplate (không cần thiết)
   
   // State to track image pages configuration
   const [imagePagesConfig, setImagePagesConfig] = useState<Record<number, { 
@@ -428,69 +421,15 @@ export default function ReportEditorPage() {
   }, [pagesContent, imagePagesConfig, currentPage])
 
   // Calculate total pages dynamically based on templates and image pages
-  useEffect(() => {
-    if (initialTemplate && dailyTemplate) {
-      const calculatedPages = (initialTemplate.pageCount || 0) + (dailyTemplate.pageCount || 0) + imagePages
-      console.log(`📊 Dynamic page calculation:`)
-      console.log(`   - Initial template "${initialTemplate.name}": ${initialTemplate.pageCount} pages`)
-      console.log(`   - Daily template "${dailyTemplate.name}": ${dailyTemplate.pageCount} pages`)
-      console.log(`   - Image pages: ${imagePages} pages`)
-      console.log(`   - Total: ${calculatedPages} pages`)
-      setTotalPages(calculatedPages)
-    } else {
-      console.log(`⚠️ Templates not ready yet:`, { 
-        initialTemplate: !!initialTemplate, 
-        dailyTemplate: !!dailyTemplate 
-      })
-    }
-  }, [initialTemplate, dailyTemplate, imagePages])
+  // ❌ REMOVED: Template-based page calculation useEffects (không cần thiết)
+  // Logic mới: Khởi tạo = 1 trang, tạo thêm = dựa vào form
 
-  // Load template content when templates are available
-  useEffect(() => {
-    const initialPageCount = initialTemplate?.pageCount || 6
-    const dailyPageCount = dailyTemplate?.pageCount || 1
-    const dailyStartPage = initialPageCount + 1
-    const dailyEndPage = initialPageCount + dailyPageCount
+  // ❌ REMOVED: Load template content useEffect (không cần thiết)
 
-    if (initialTemplateId && currentPage <= initialPageCount) {
-      const pageNumberInTemplate = currentPage
-      loadTemplateContent(initialTemplateId, pageNumberInTemplate)
-      setSelectedTemplateId(initialTemplateId)
-    } else if (dailyTemplateId && currentPage >= dailyStartPage && currentPage <= dailyEndPage) {
-      const pageNumberInTemplate = currentPage - initialPageCount
-      loadTemplateContent(dailyTemplateId, pageNumberInTemplate)
-      setSelectedTemplateId(dailyTemplateId)
-    }
-  }, [initialTemplateId, dailyTemplateId, currentPage, initialTemplate, dailyTemplate])
+  // ❌ REMOVED: Template-related useEffects (không cần thiết)
 
-  // Load existing diaries on mount and when useTemplate changes
-  useEffect(() => {
-    loadExistingDiaries()
-  }, [])
-  
-  // Reload diaries when useTemplate is enabled
-  useEffect(() => {
-    if (useTemplate && existingDiaries.length === 0) {
-      console.log("🔄 Reloading diaries because useTemplate is enabled but no diaries found")
-      loadExistingDiaries()
-    }
-  }, [useTemplate])
-
-  // Logic: Nếu chỉ chèn mẫu thì bỏ tick "Sử dụng trang chứa ảnh"
-  useEffect(() => {
-    if (useTemplate && selectedDiaryId && selectedDiaryId !== "none") {
-      setUseImagePages(false)
-    }
-  }, [useTemplate, selectedDiaryId])
-
-  // Recalculate total pages when templates or image pages change
-  useEffect(() => {
-    const initialPages = availableTemplates.find((t: any) => t.id === initialTemplateId)?.pageCount || 0
-    const dailyPages = availableTemplates.find((t: any) => t.id === dailyTemplateId)?.pageCount || 0
-    const total = Math.max(1, initialPages + dailyPages + (imagePages || 0))
-    setTotalPages(total)
-    if (currentPage > total) setCurrentPage(total)
-  }, [availableTemplates, initialTemplateId, dailyTemplateId, imagePages])
+  // ❌ REMOVED: useEffect tự động tính totalPages từ templates (gây nhấp nháy 1↔6)
+  // Anh không dùng templates nên đã xóa bỏ để tránh conflict
 
   // Auto-save effect
   useEffect(() => {
@@ -596,17 +535,7 @@ export default function ReportEditorPage() {
         const config = JSON.parse(reportConfig)
         console.log(`📋 Loading report-specific config for ${reportId}:`, config)
         
-        // Load existing diaries and selected diary from config
-        if (config.existingDiaries) {
-          setExistingDiaries(config.existingDiaries)
-        }
-        if (config.selectedDiaryId) {
-          setSelectedDiaryId(config.selectedDiaryId)
-          setSelectedTemplate(config.selectedDiaryId) // For backward compatibility
-        }
-        if (config.useTemplate !== undefined) {
-          setUseTemplate(config.useTemplate)
-        }
+        // ❌ REMOVED: Template config loading (không cần thiết)
         
         // Legacy support for old template system - validate templates exist
         if (config.mauNhatKyDau && availableTemplates.some((t: any) => t.id === config.mauNhatKyDau)) {
@@ -655,7 +584,7 @@ export default function ReportEditorPage() {
       try {
         const settings = JSON.parse(savedSettings)
         console.log(`📋 Loading default settings (fallback):`, settings)
-        setSelectedTemplate(settings.template || "")
+        // ❌ REMOVED: setSelectedTemplate (không cần thiết)
         setImagePages(settings.imagePages || 2)
         setImagesPerPage(settings.imagesPerPage || 4)
         setImagesPerRow(settings.framesPerRow || 2)
@@ -867,34 +796,7 @@ export default function ReportEditorPage() {
     return false
   }
 
-  const loadExistingDiaries = async () => {
-    try {
-      console.log("🔍 Loading existing diaries from library...")
-      
-      // Load from library API (same as loadLibraryFiles)
-      const response = await fetch('/api/construction-files?type=library')
-      if (response.ok) {
-        const data = await response.json()
-        console.log("📚 Library files received:", data)
-        
-        const libraryDiaries = data.files.map((file: any) => ({
-          id: file.id,
-          title: file.name,
-          pageCount: file.totalPages || 1,
-          createdAt: file.createdAt || file.savedAt
-        }))
-        
-        console.log("🎯 Library diaries mapped:", libraryDiaries)
-        setExistingDiaries(libraryDiaries)
-      } else {
-        console.log("❌ Failed to load library files")
-        setExistingDiaries([])
-      }
-    } catch (error) {
-      console.error("Error loading existing diaries:", error)
-      setExistingDiaries([])
-    }
-  }
+  // ❌ REMOVED: loadExistingDiaries function (không cần thiết)
 
   const initializeDocument = async () => {
     try {
@@ -1423,10 +1325,7 @@ export default function ReportEditorPage() {
           console.log('✅ Daily template set:', dailyTemplate.name, 'Pages:', dailyTemplate.pageCount)
         }
 
-        // Set default selected template to initial
-        if (initialTemplate && !selectedTemplateId) {
-          setSelectedTemplateId(initialTemplate.id)
-        }
+        // ❌ REMOVED: Template selection logic (không cần thiết)
         
         console.log('Available templates loaded:', result.data.length)
       } else {
@@ -1437,65 +1336,7 @@ export default function ReportEditorPage() {
     }
   }
 
-  const loadTemplateContent = async (templateId: string, pageNumber?: number) => {
-    try {
-      setTemplateLoading(true)
-      
-      // Validate template exists before making API call
-      if (!availableTemplates.some((t: any) => t.id === templateId)) {
-        console.warn(`Template ${templateId} not found in available templates, skipping load`)
-        setTemplateContent("")
-        setTemplateLoading(false)
-        return
-      }
-      
-      // Build URL with pageNumber parameter if provided
-      let url = `/api/templates/content?templateId=${templateId}`
-      if (pageNumber && pageNumber > 0) {
-        url += `&pageNumber=${pageNumber}`
-      }
-      
-      const response = await fetch(url)
-      const result = await response.json()
-      
-      if (result.success) {
-        setTemplateContent(result.data.content)
-        console.log('Template content loaded successfully:', {
-          name: result.data.name,
-          pageNumber: pageNumber || 'all',
-          currentPage: result.data.currentPage,
-          totalPagesInSplit: result.data.totalPagesInSplit
-        })
-        
-        // Show warning toast if fallback template was used
-        if (result.warning && result.fallbackUsed) {
-          const warningToast = toast({
-            title: "Cảnh báo Template",
-            description: result.warning,
-            variant: "destructive",
-          })
-          // Auto dismiss warning toast after 5 seconds
-          setTimeout(() => warningToast.dismiss(), 5000)
-        }
-      } else {
-        console.error('Failed to load template content:', result.error)
-        setTemplateContent(`<div class="error">Lỗi tải template: ${result.error}</div>`)
-        
-        const errorToast = toast({
-          title: "Lỗi tải template",
-          description: result.error,
-          variant: "destructive",
-        })
-        // Auto dismiss error toast after 3 seconds
-        setTimeout(() => errorToast.dismiss(), 3000)
-      }
-    } catch (error) {
-      console.error('Error loading template content:', error)
-      setTemplateContent(`<div class="error">Lỗi kết nối: ${error instanceof Error ? error.message : 'Unknown error'}</div>`)
-    } finally {
-      setTemplateLoading(false)
-    }
-  }
+  // ❌ REMOVED: loadTemplateContent function (không cần thiết)
 
   const handlePageClick = (pageNum: number) => {
     // Save current page content before switching
@@ -1509,37 +1350,8 @@ export default function ReportEditorPage() {
     // Load saved content for the new page
     loadPageContent(pageNum)
     
-    // Calculate page boundaries dynamically
-    const initialPageCount = initialTemplate?.pageCount || 6
-    const dailyPageCount = dailyTemplate?.pageCount || 1
-    const dailyStartPage = initialPageCount + 1
-    const dailyEndPage = initialPageCount + dailyPageCount
-    
-    // Choose template and calculate page number within template
-    let templateToLoad = ""
-    let pageNumberInTemplate = 1
-    
-    if (pageNum <= initialPageCount) {
-      // Initial template pages (1-6)
-      templateToLoad = initialTemplateId
-      pageNumberInTemplate = pageNum // Page 1-6 within initial template
-      console.log(`📄 Page ${pageNum}: Using INITIAL template, page ${pageNumberInTemplate} of ${initialPageCount}`)
-    } else if (pageNum >= dailyStartPage && pageNum <= dailyEndPage) {
-      // Daily template pages (7)
-      templateToLoad = dailyTemplateId
-      pageNumberInTemplate = pageNum - initialPageCount // Should be 1 for daily template
-      console.log(`📄 Page ${pageNum}: Using DAILY template, page ${pageNumberInTemplate} of ${dailyPageCount}`)
-    }
-
-    // Load template content if we have a template for this page
-    if (templateToLoad) {
-      loadTemplateContent(templateToLoad, pageNumberInTemplate)
-      setSelectedTemplateId(templateToLoad)
-    } else {
-      // Image pages: Beyond template pages
-      setTemplateContent("")
-      console.log(`📄 Page ${pageNum}: Image page (no template)`)
-    }
+    // ✅ SIMPLIFIED: Không cần template logic
+    console.log(`📄 Page ${pageNum}: Standard page (no template)`)
   }
 
   // Đã xóa: handleImageUpload function
@@ -1828,19 +1640,7 @@ export default function ReportEditorPage() {
   }
 
   const handleCreateDiary = async () => {
-    // Validation
-    if (useTemplate && !selectedDiaryId) {
-      const errorToast = toast({
-        title: "Lỗi",
-        description: "Vui lòng chọn nhật ký mẫu trước khi tạo",
-        variant: "destructive",
-      })
-      // Auto dismiss error toast after 3 seconds
-      setTimeout(() => errorToast.dismiss(), 3000)
-      return
-    }
-
-    // Validation thông minh sử dụng hàm tính toán
+    // ✅ LOGIC MỚI: Chỉ validation cho image pages (không cần template)
     if (useImagePages) {
       const calculation = calculateGridLayout({
         imagesPerPage,
@@ -1872,9 +1672,7 @@ export default function ReportEditorPage() {
       }
     }
 
-    console.log("[v0] Tạo thêm nhật ký với cấu hình:", {
-      useTemplate,
-      selectedDiaryId,
+    console.log("✅ [SIMPLIFIED] Tạo thêm nhật ký với cấu hình:", {
       useImagePages,
       imagePages,
       imagesPerPage,
@@ -1883,68 +1681,27 @@ export default function ReportEditorPage() {
     })
 
     if (saveAsDefault) {
-      // Save settings as default
+      // Save settings as default (chỉ image settings)
       localStorage.setItem("diary-default-settings", JSON.stringify({
-        useTemplate,
-        selectedDiaryId,
         imagePages,
         imagesPerPage,
         imagesPerRow
       }))
     }
 
-    // Calculate pages to create
-    let templatePages = 0
+    // ✅ LOGIC MỚI: Chỉ tính image pages
     let newImagePages = useImagePages ? imagePages : 0
     
-    // Only add template pages if using template
-    if (useTemplate && selectedDiaryId && selectedDiaryId !== "none") {
-      const selectedDiary = existingDiaries.find(d => d.id === selectedDiaryId)
-      if (!selectedDiary) {
-        const errorToast = toast({
-          title: "Lỗi",
-          description: "Không tìm thấy nhật ký mẫu đã chọn",
-          variant: "destructive",
-        })
-        // Auto dismiss error toast after 3 seconds
-        setTimeout(() => errorToast.dismiss(), 3000)
-        return
-      }
-      templatePages = selectedDiary.pageCount || 0
-      
-      // Load template content from library
-      console.log("🔍 Loading template content for diary:", selectedDiary.id)
-      try {
-        const response = await fetch('/api/construction-files?type=library')
-        if (response.ok) {
-          const data = await response.json()
-          const templateFile = data.files.find((f: any) => f.id === selectedDiary.id)
-          if (templateFile && templateFile.pagesContent) {
-            console.log("📋 Found template content:", templateFile.pagesContent)
-            // Copy template pages to current report
-            const updatedPagesContent = { ...pagesContent }
-            Object.keys(templateFile.pagesContent).forEach(pageNum => {
-              const newPageNum = totalPages + parseInt(pageNum)
-              updatedPagesContent[newPageNum] = templateFile.pagesContent[pageNum]
-              console.log(`📄 Copied page ${pageNum} to page ${newPageNum}:`, templateFile.pagesContent[pageNum])
-            })
-            setPagesContent(updatedPagesContent)
-          }
-        }
-      } catch (error) {
-        console.error("Error loading template content:", error)
-      }
-    }
+    // ✅ LOGIC MỚI: Chỉ tính tổng image pages
+    const totalNewPages = newImagePages
 
-    const totalNewPages = templatePages + newImagePages
-
-    console.log(`[v0] Thêm ${templatePages} trang template + ${newImagePages} trang ảnh = ${totalNewPages} trang mới`)
+    console.log(`✅ [SIMPLIFIED] Thêm ${newImagePages} trang ảnh = ${totalNewPages} trang mới`)
 
     // Create image pages with layout configuration (only if useImagePages is true)
     const newImagePagesData = []
     if (useImagePages) {
       for (let i = 0; i < newImagePages; i++) {
-        const pageNumber = totalPages + templatePages + i + 1
+        const pageNumber = totalPages + i + 1
         newImagePagesData.push({
           pageNumber,
           type: 'image-page',
@@ -2006,10 +1763,9 @@ export default function ReportEditorPage() {
     }, 500)
     
     // Show success toast
-    const templateText = useTemplate && selectedDiaryId ? "có mẫu" : "không sử dụng mẫu"
     toast({
       title: "Thành công",
-      description: `Đã tạo thêm ${totalNewPages} trang (${templatePages} trang mẫu + ${newImagePages} trang ảnh ${imagesPerRow}x${Math.ceil(imagesPerPage/imagesPerRow)})`,
+      description: `Đã tạo thêm ${totalNewPages} trang ảnh (${imagesPerRow}x${Math.ceil(imagesPerPage/imagesPerRow)} layout)`,
       variant: "default",
     })
     
@@ -4538,51 +4294,7 @@ export default function ReportEditorPage() {
             <DialogTitle className="text-cyan-400">Tạo thêm nhật ký</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
-            {/* KHỐI 1: Template Selection */}
-            <div className="border border-slate-600 rounded-lg p-4 space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox 
-                  id="use-template" 
-                  checked={useTemplate} 
-                  onCheckedChange={(checked) => {
-                    setUseTemplate(checked)
-                    // Nếu chỉ chèn mẫu thì bỏ tick "Sử dụng trang chứa ảnh"
-                    if (checked) {
-                      setUseImagePages(false)
-                    }
-                  }}
-                />
-                <Label htmlFor="use-template" className="text-sm font-medium">
-                  Sử dụng nhật ký đã tạo làm mẫu
-                </Label>
-              </div>
-
-              {/* Template Selection */}
-              {useTemplate && (
-                <div>
-                  <Label htmlFor="template-select" className="text-sm font-medium">
-                    Chọn nhật ký mẫu * ({existingDiaries.length} mẫu)
-                  </Label>
-                  <Select value={selectedDiaryId} onValueChange={setSelectedDiaryId}>
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="Chọn nhật ký mẫu..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-700 border-slate-600">
-                      <SelectItem value="none">None (Không sử dụng mẫu)</SelectItem>
-                      {existingDiaries.length === 0 ? (
-                        <SelectItem value="loading" disabled>Đang tải...</SelectItem>
-                      ) : (
-                        existingDiaries.map((diary) => (
-                          <SelectItem key={diary.id} value={diary.id}>
-                            {diary.title} ({diary.pageCount || 0} trang)
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </div>
+            {/* ❌ REMOVED: Template Selection (không cần thiết) */}
 
             {/* KHỐI 2: Image Pages Configuration */}
             <div className="border border-slate-600 rounded-lg p-4 space-y-4">
@@ -4793,7 +4505,6 @@ export default function ReportEditorPage() {
               <Button
                 onClick={handleCreateDiary}
                 className="flex-1 bg-cyan-600 hover:bg-cyan-700"
-                disabled={useTemplate && !selectedDiaryId}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Tạo nhật ký
