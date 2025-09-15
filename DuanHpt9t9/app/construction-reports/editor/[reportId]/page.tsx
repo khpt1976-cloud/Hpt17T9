@@ -130,8 +130,19 @@ export default function ReportEditorPage() {
   const [saveAsDefault, setSaveAsDefault] = useState(false)
   const [useImagePages, setUseImagePages] = useState(true)
   
-  // ❌ REMOVED: existingDiaries state (không cần thiết)
-  // ❌ REMOVED: selectedDiaryId, useTemplate (không cần thiết)
+  // THÊM: 4 biến margin tùy chỉnh
+  const [marginLeft, setMarginLeft] = useState(10)     // mm - Margin trái
+  const [marginRight, setMarginRight] = useState(10)   // mm - Margin phải  
+  const [marginBottom, setMarginBottom] = useState(10) // mm - Margin đáy
+  const [marginHeader, setMarginHeader] = useState(45) // mm - Khoảng cách từ đỉnh giấy đến khung ảnh
+  
+  // THÊM: Tỷ lệ ảnh
+  const [imageAspectRatio, setImageAspectRatio] = useState("4:3") // Tỷ lệ ảnh mặc định
+  
+  // Template states - KHÔI PHỤC
+  const [existingDiaries, setExistingDiaries] = useState<any[]>([])
+  const [selectedDiaryId, setSelectedDiaryId] = useState("")
+  const [useTemplate, setUseTemplate] = useState(false)
   
   // State to track image pages configuration
   const [imagePagesConfig, setImagePagesConfig] = useState<Record<number, { 
@@ -588,6 +599,13 @@ export default function ReportEditorPage() {
         setImagePages(settings.imagePages || 2)
         setImagesPerPage(settings.imagesPerPage || 4)
         setImagesPerRow(settings.framesPerRow || 2)
+        // THÊM: Load margin settings
+        setMarginLeft(settings.marginLeft || 10)
+        setMarginRight(settings.marginRight || 10)
+        setMarginBottom(settings.marginBottom || 10)
+        setMarginHeader(settings.marginHeader || 45)
+        // THÊM: Load aspect ratio setting
+        setImageAspectRatio(settings.imageAspectRatio || "4:3")
       } catch (error) {
         console.error("[v0] Error loading default settings:", error)
       }
@@ -1336,6 +1354,25 @@ export default function ReportEditorPage() {
     }
   }
 
+  // KHÔI PHỤC: Load existing diaries for template selection
+  const loadExistingDiaries = () => {
+    try {
+      const savedReports = localStorage.getItem("construction-reports")
+      if (savedReports) {
+        const reports = JSON.parse(savedReports)
+        // Filter out current report and only show reports with content
+        const availableDiaries = reports.filter((report: any) => 
+          report.id !== reportId && 
+          (Object.keys(report.pages || {}).length > 0 || report.totalPages > 1)
+        )
+        setExistingDiaries(availableDiaries)
+        console.log('📚 Loaded existing diaries for template:', availableDiaries.length)
+      }
+    } catch (error) {
+      console.error('Error loading existing diaries:', error)
+    }
+  }
+
   // ❌ REMOVED: loadTemplateContent function (không cần thiết)
 
   const handlePageClick = (pageNum: number) => {
@@ -1358,6 +1395,8 @@ export default function ReportEditorPage() {
 
   const handleAddDiary = () => {
     setShowAddDiaryDialog(true)
+    // Load existing diaries when dialog opens
+    loadExistingDiaries()
   }
 
   // Generate HTML for image page - Simple Table Approach
@@ -1640,11 +1679,70 @@ export default function ReportEditorPage() {
   }
 
   const handleCreateDiary = async () => {
-    // ✅ LOGIC MỚI: Chỉ validation cho image pages (không cần template)
+    // KHÔI PHỤC: Xử lý template trước
+    if (useTemplate && selectedDiaryId) {
+      try {
+        const savedReports = localStorage.getItem("construction-reports")
+        if (savedReports) {
+          const reports = JSON.parse(savedReports)
+          const templateReport = reports.find((r: any) => r.id === selectedDiaryId)
+          
+          if (templateReport) {
+            // Copy content from template
+            const templatePages = templateReport.pages || {}
+            const templateImageConfig = templateReport.imagePagesConfig || {}
+            
+            // Add template pages to current report
+            const startPage = totalPages + 1
+            const newPagesContent = { ...pagesContent }
+            const newImageConfig = { ...imagePagesConfig }
+            
+            Object.keys(templatePages).forEach((pageKey) => {
+              const pageNum = parseInt(pageKey)
+              const newPageNum = startPage + pageNum - 1
+              newPagesContent[newPageNum] = templatePages[pageKey]
+            })
+            
+            Object.keys(templateImageConfig).forEach((pageKey) => {
+              const pageNum = parseInt(pageKey)
+              const newPageNum = startPage + pageNum - 1
+              newImageConfig[newPageNum] = { ...templateImageConfig[pageKey] }
+            })
+            
+            setPagesContent(newPagesContent)
+            setImagePagesConfig(newImageConfig)
+            setTotalPages(totalPages + (templateReport.totalPages || 1))
+            
+            toast({
+              title: "✅ Thành công",
+              description: `Đã sao chép ${templateReport.totalPages || 1} trang từ "${templateReport.title}"`,
+            })
+            
+            setShowAddDiaryDialog(false)
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Error copying template:', error)
+        toast({
+          title: "❌ Lỗi",
+          description: "Không thể sao chép từ nhật ký mẫu",
+          variant: "destructive",
+        })
+        return
+      }
+    }
+
+    // Validation cho image pages
     if (useImagePages) {
       const calculation = calculateGridLayout({
         imagesPerPage,
-        imagesPerRow
+        imagesPerRow,
+        marginLeft,
+        marginRight,
+        marginBottom,
+        marginHeader,
+        aspectRatio: imageAspectRatio
       })
       
       if (!calculation.isValid || calculation.errors.length > 0) {
@@ -1672,7 +1770,9 @@ export default function ReportEditorPage() {
       }
     }
 
-    console.log("✅ [SIMPLIFIED] Tạo thêm nhật ký với cấu hình:", {
+    console.log("✅ Tạo thêm nhật ký với cấu hình:", {
+      useTemplate,
+      selectedDiaryId,
       useImagePages,
       imagePages,
       imagesPerPage,
@@ -1681,11 +1781,16 @@ export default function ReportEditorPage() {
     })
 
     if (saveAsDefault) {
-      // Save settings as default (chỉ image settings)
+      // Save settings as default (bao gồm cả margin settings)
       localStorage.setItem("diary-default-settings", JSON.stringify({
         imagePages,
         imagesPerPage,
-        imagesPerRow
+        imagesPerRow,
+        marginLeft,
+        marginRight,
+        marginBottom,
+        marginHeader,
+        imageAspectRatio
       }))
     }
 
@@ -3871,6 +3976,11 @@ export default function ReportEditorPage() {
                 imagesPerPage={imagePagesConfig[currentPage].imagesPerPage}
                 imagesPerRow={imagePagesConfig[currentPage].imagesPerRow}
                 images={imagePagesConfig[currentPage].images}
+                marginLeft={marginLeft}
+                marginRight={marginRight}
+                marginBottom={marginBottom}
+                marginHeader={marginHeader}
+                aspectRatio={imageAspectRatio}
                 onImageChange={(slotIndex, imageData) => {
                   console.log(`🖼️ Image changed: page ${currentPage}, slot ${slotIndex}`)
                   
@@ -4288,26 +4398,150 @@ export default function ReportEditorPage() {
       )}
 
       {/* Add Diary Dialog */}
-      <Dialog open={showAddDiaryDialog} onOpenChange={setShowAddDiaryDialog}>
+      <Dialog open={showAddDiaryDialog} onOpenChange={(open) => {
+        setShowAddDiaryDialog(open)
+        if (!open) {
+          // Reset states when dialog closes
+          setUseTemplate(false)
+          setSelectedDiaryId("")
+          setUseImagePages(true)
+        }
+      }}>
         <DialogContent className="bg-slate-800 border-slate-700 text-white max-w-md">
           <DialogHeader>
             <DialogTitle className="text-cyan-400">Tạo thêm nhật ký</DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
-            {/* ❌ REMOVED: Template Selection (không cần thiết) */}
+            {/* KHÔI PHỤC: Template Selection */}
+            <div className="border border-slate-600 rounded-lg p-4 space-y-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="use-template"
+                  checked={useTemplate}
+                  onCheckedChange={setUseTemplate}
+                />
+                <Label htmlFor="use-template" className="text-sm font-medium">
+                  Sử dụng nhật ký đã tạo làm mẫu
+                </Label>
+              </div>
 
-            {/* KHỐI 2: Image Pages Configuration */}
+              {useTemplate && (
+                <div>
+                  <Label htmlFor="template-select" className="text-sm font-medium">
+                    Chọn nhật ký làm mẫu
+                  </Label>
+                  <Select value={selectedDiaryId} onValueChange={setSelectedDiaryId}>
+                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                      <SelectValue placeholder="Chọn nhật ký..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-700 border-slate-600">
+                      {existingDiaries.map((diary) => (
+                        <SelectItem key={diary.id} value={diary.id} className="text-white hover:bg-slate-600">
+                          {diary.title} ({diary.totalPages || 1} trang)
+                        </SelectItem>
+                      ))}
+                      {existingDiaries.length === 0 && (
+                        <SelectItem value="no-diaries" disabled className="text-gray-400">
+                          Không có nhật ký nào khả dụng
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            </div>
+
+            {/* KHỐI 2: Margin Settings */}
+            <div className="border border-slate-600 rounded-lg p-4 space-y-4">
+              <h3 className="text-sm font-medium text-cyan-400">⚙️ Cài Đặt Margin (mm)</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="margin-left" className="text-sm font-medium">
+                    Margin trái
+                  </Label>
+                  <Input
+                    id="margin-left"
+                    type="number"
+                    min="5"
+                    max="50"
+                    step="1"
+                    value={marginLeft}
+                    onChange={(e) => setMarginLeft(Number(e.target.value))}
+                    className="bg-slate-700 border-slate-600 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="margin-right" className="text-sm font-medium">
+                    Margin phải
+                  </Label>
+                  <Input
+                    id="margin-right"
+                    type="number"
+                    min="5"
+                    max="50"
+                    step="1"
+                    value={marginRight}
+                    onChange={(e) => setMarginRight(Number(e.target.value))}
+                    className="bg-slate-700 border-slate-600 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="margin-bottom" className="text-sm font-medium">
+                    Margin đáy
+                  </Label>
+                  <Input
+                    id="margin-bottom"
+                    type="number"
+                    min="5"
+                    max="50"
+                    step="1"
+                    value={marginBottom}
+                    onChange={(e) => setMarginBottom(Number(e.target.value))}
+                    className="bg-slate-700 border-slate-600 text-white"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="margin-header" className="text-sm font-medium">
+                    Margin header
+                  </Label>
+                  <Input
+                    id="margin-header"
+                    type="number"
+                    min="20"
+                    max="100"
+                    step="1"
+                    value={marginHeader}
+                    onChange={(e) => setMarginHeader(Number(e.target.value))}
+                    className="bg-slate-700 border-slate-600 text-white"
+                  />
+                </div>
+              </div>
+              
+              <p className="text-xs text-slate-400">
+                💡 Margin header: Khoảng cách từ đỉnh giấy đến khung ảnh đầu tiên
+              </p>
+            </div>
+
+            {/* KHỐI 3: Image Pages Configuration */}
             <div className="border border-slate-600 rounded-lg p-4 space-y-4">
               <div className="flex items-center space-x-2">
                 <Checkbox 
                   id="use-image-pages" 
                   checked={useImagePages} 
                   onCheckedChange={setUseImagePages}
+                  disabled={useTemplate}
                 />
-                <Label htmlFor="use-image-pages" className="text-sm font-medium">
+                <Label htmlFor="use-image-pages" className={`text-sm font-medium ${useTemplate ? 'text-gray-400' : ''}`}>
                   Sử dụng trang chứa ảnh
                 </Label>
               </div>
+              
+              {useTemplate && (
+                <p className="text-xs text-yellow-400">
+                  ⚠️ Tắt khi sử dụng mẫu - cấu hình ảnh sẽ được sao chép từ nhật ký mẫu
+                </p>
+              )}
 
               {/* Image Configuration */}
               {useImagePages && (
@@ -4366,7 +4600,12 @@ export default function ReportEditorPage() {
                           // Sử dụng hàm tính toán thông minh
                           const calculation = calculateGridLayout({
                             imagesPerPage: value,
-                            imagesPerRow: imagesPerRow
+                            imagesPerRow: imagesPerRow,
+                            marginLeft,
+                            marginRight,
+                            marginBottom,
+                            marginHeader,
+                            aspectRatio: imageAspectRatio
                           })
                           
                           // Hiển thị lỗi nếu có
@@ -4413,7 +4652,12 @@ export default function ReportEditorPage() {
                       // Sử dụng hàm tính toán thông minh
                       const calculation = calculateGridLayout({
                         imagesPerPage: imagesPerPage,
-                        imagesPerRow: newImagesPerRow
+                        imagesPerRow: newImagesPerRow,
+                        marginLeft,
+                        marginRight,
+                        marginBottom,
+                        marginHeader,
+                        aspectRatio: imageAspectRatio
                       })
                       
                       // Chỉ cập nhật state khi hợp lệ
@@ -4451,43 +4695,25 @@ export default function ReportEditorPage() {
                     </Select>
                   </div>
 
-                  {/* Thông tin tính toán real-time */}
-                  <div className="mt-4 p-3 bg-slate-800 rounded-lg border border-slate-600">
-                    <div className="text-sm text-slate-300">
-                      {(() => {
-                        const calculation = calculateGridLayout({
-                          imagesPerPage,
-                          imagesPerRow
-                        })
-                        
-                        if (calculation.errors.length > 0) {
-                          return (
-                            <div className="text-red-400">
-                              ❌ {calculation.errors[0]}
-                            </div>
-                          )
-                        }
-                        
-                        return (
-                          <div className="space-y-1">
-                            <div className="text-cyan-400 font-medium">
-                              📐 Layout: {calculation.rows} hàng × {calculation.cols} cột
-                            </div>
-                            <div className="text-slate-300">
-                              📏 Kích thước khung: {Math.round(calculation.cellWidth)}×{Math.round(calculation.cellHeight)}mm
-                            </div>
-                            <div className="text-slate-300">
-                              📄 Tổng kích thước: {Math.round(calculation.totalGridWidth)}×{Math.round(calculation.totalGridHeight)}mm
-                            </div>
-                            {calculation.warnings.length > 0 && (
-                              <div className="text-yellow-400">
-                                ⚠️ {calculation.warnings[0]}
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })()}
-                    </div>
+                  {/* Aspect Ratio Selector */}
+                  <div className="mt-4">
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      📐 Tỷ lệ ảnh
+                    </label>
+                    <select
+                      value={imageAspectRatio}
+                      onChange={(e) => setImageAspectRatio(e.target.value)}
+                      className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="1:1">1:1 (Vuông)</option>
+                      <option value="4:3">4:3 (Ngang chuẩn)</option>
+                      <option value="3:4">3:4 (Dọc chuẩn)</option>
+                      <option value="16:9">16:9 (Ngang rộng)</option>
+                      <option value="9:16">9:16 (Dọc rộng)</option>
+                    </select>
+                    <p className="text-xs text-slate-400 mt-1">
+                      💡 Tỷ lệ này sẽ áp dụng cho tất cả khung ảnh trong nhật ký
+                    </p>
                   </div>
                 </>
               )}
@@ -4496,7 +4722,12 @@ export default function ReportEditorPage() {
             {/* Action Buttons */}
             <div className="flex gap-3 pt-4">
               <Button
-                onClick={() => setShowAddDiaryDialog(false)}
+                onClick={() => {
+                  setShowAddDiaryDialog(false)
+                  setUseTemplate(false)
+                  setSelectedDiaryId("")
+                  setUseImagePages(true)
+                }}
                 variant="outline"
                 className="flex-1 border-slate-600 text-black font-bold bg-white hover:bg-gray-100"
               >
@@ -4505,9 +4736,10 @@ export default function ReportEditorPage() {
               <Button
                 onClick={handleCreateDiary}
                 className="flex-1 bg-cyan-600 hover:bg-cyan-700"
+                disabled={useTemplate && !selectedDiaryId}
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Tạo nhật ký
+                {useTemplate ? 'Sao chép mẫu' : 'Tạo nhật ký'}
               </Button>
             </div>
           </div>

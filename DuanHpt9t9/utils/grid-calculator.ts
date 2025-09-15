@@ -3,9 +3,28 @@
  * Tính toán kích thước khung ảnh dựa trên input người dùng và constraints khổ A4
  */
 
+/**
+ * Parse aspect ratio string to width/height ratio
+ * @param aspectRatio - String like "4:3", "16:9", etc.
+ * @returns Object with width and height ratio
+ */
+function parseAspectRatio(aspectRatio: string): { widthRatio: number; heightRatio: number } {
+  const [widthStr, heightStr] = aspectRatio.split(':')
+  const widthRatio = parseInt(widthStr) || 4
+  const heightRatio = parseInt(heightStr) || 3
+  return { widthRatio, heightRatio }
+}
+
 export interface GridCalculationInput {
   imagesPerPage: number    // Số ảnh muốn chèn
   imagesPerRow: number     // Số khung theo chiều ngang
+  // THÊM: Margin parameters tùy chỉnh
+  marginLeft?: number      // mm - Margin trái (mặc định 10mm)
+  marginRight?: number     // mm - Margin phải (mặc định 10mm)
+  marginBottom?: number    // mm - Margin đáy (mặc định 10mm)
+  marginHeader?: number    // mm - Khoảng cách từ đỉnh giấy đến khung ảnh (mặc định 45mm)
+  // THÊM: Tỷ lệ ảnh
+  aspectRatio?: string     // Tỷ lệ ảnh (mặc định "4:3")
 }
 
 export interface GridCalculationResult {
@@ -25,6 +44,18 @@ export interface GridCalculationResult {
   // Grid dimensions
   totalGridWidth: number  // mm - Tổng chiều rộng grid
   totalGridHeight: number // mm - Tổng chiều cao grid
+  
+  // THÊM: Margin và available space info
+  margins: {
+    left: number
+    right: number
+    bottom: number
+    header: number
+  }
+  availableArea: {
+    width: number          // mm - Không gian khả dụng cho grid
+    height: number         // mm
+  }
 }
 
 // Constants - Khổ A4 và constraints
@@ -58,9 +89,19 @@ const A4_CONSTANTS = {
  * Tính toán layout grid dựa trên input người dùng - STRICT 4x5 LIMITS
  */
 export function calculateGridLayout(input: GridCalculationInput): GridCalculationResult {
-  const { imagesPerPage, imagesPerRow } = input
+  const { 
+    imagesPerPage, 
+    imagesPerRow,
+    // THÊM: Margin parameters với giá trị mặc định
+    marginLeft = 10,
+    marginRight = 10,
+    marginBottom = 10,
+    marginHeader = 45,
+    // THÊM: Aspect ratio với giá trị mặc định
+    aspectRatio = "4:3"
+  } = input
   
-  // Initialize result
+  // Initialize result với margin info
   const result: GridCalculationResult = {
     cellWidth: 0,
     cellHeight: 0,
@@ -70,7 +111,18 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
     warnings: [],
     errors: [],
     totalGridWidth: 0,
-    totalGridHeight: 0
+    totalGridHeight: 0,
+    // THÊM: Margin và available area info
+    margins: {
+      left: marginLeft,
+      right: marginRight,
+      bottom: marginBottom,
+      header: marginHeader
+    },
+    availableArea: {
+      width: 0,
+      height: 0
+    }
   }
   
   // Validation 1: Basic input validation
@@ -100,34 +152,71 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
     return result
   }
   
+  // TÍNH TOÁN AVAILABLE SPACE VỚI MARGIN TÙY CHỈNH
+  const availableWidth = A4_CONSTANTS.PAPER_WIDTH - marginLeft - marginRight
+  const availableHeight = A4_CONSTANTS.PAPER_HEIGHT - marginHeader - marginBottom
+  
+  // Cập nhật available area trong result
+  result.availableArea.width = availableWidth
+  result.availableArea.height = availableHeight
+  
   // Calculate available space for cells (minus gaps)
   const totalGapWidth = (imagesPerRow - 1) * A4_CONSTANTS.GAP_SIZE
   const totalGapHeight = (rows - 1) * A4_CONSTANTS.GAP_SIZE
   
-  const availableWidthForCells = A4_CONSTANTS.AVAILABLE_WIDTH - totalGapWidth
-  const availableHeightForCells = A4_CONSTANTS.AVAILABLE_HEIGHT - totalGapHeight
+  const availableWidthForCells = availableWidth - totalGapWidth
+  const availableHeightForCells = availableHeight - totalGapHeight
   
-  // Calculate cell dimensions - LUÔN FIT TRONG AVAILABLE AREA
-  const calculatedCellWidth = Math.floor(availableWidthForCells / imagesPerRow)
-  const calculatedCellHeight = Math.floor(availableHeightForCells / rows)
-  
-  // 🔥 FORCE SQUARE CELLS - Lấy kích thước nhỏ nhất để đảm bảo hình vuông
-  const calculatedSquareSize = Math.min(calculatedCellWidth, calculatedCellHeight)
-  
-  // STRICT: Cell size PHẢI fit trong available area - không được vượt quá
-  let finalCellSize = calculatedSquareSize
-  
-  // Apply minimum size constraint (nhưng vẫn ưu tiên fit trong trang)
-  if (finalCellSize < A4_CONSTANTS.MIN_CELL_SIZE) {
-    result.warnings.push(`⚠️ Khung ảnh rất nhỏ (${finalCellSize}mm). Khuyến nghị giảm số khung/hàng hoặc số ảnh.`)
+  // Parse aspect ratio
+  const { widthRatio, heightRatio } = parseAspectRatio(aspectRatio)
+  const aspectRatioValue = widthRatio / heightRatio
+
+  // Calculate cell dimensions based on aspect ratio
+  const maxCellWidth = Math.floor(availableWidthForCells / imagesPerRow)
+  const maxCellHeight = Math.floor(availableHeightForCells / rows)
+
+  // Calculate optimal cell size based on aspect ratio
+  let finalCellWidth: number
+  let finalCellHeight: number
+
+  // Try fitting by width first
+  const cellWidthByWidth = maxCellWidth
+  const cellHeightByWidth = Math.floor(cellWidthByWidth / aspectRatioValue)
+
+  // Try fitting by height first  
+  const cellHeightByHeight = maxCellHeight
+  const cellWidthByHeight = Math.floor(cellHeightByHeight * aspectRatioValue)
+
+  // Choose the option that fits better
+  if (cellHeightByWidth <= maxCellHeight && cellWidthByWidth <= maxCellWidth) {
+    // Width-constrained fits
+    finalCellWidth = cellWidthByWidth
+    finalCellHeight = cellHeightByWidth
+  } else if (cellWidthByHeight <= maxCellWidth && cellHeightByHeight <= maxCellHeight) {
+    // Height-constrained fits
+    finalCellWidth = cellWidthByHeight
+    finalCellHeight = cellHeightByHeight
+  } else {
+    // Neither fits perfectly, use smaller option
+    if (cellWidthByWidth * cellHeightByWidth > cellWidthByHeight * cellHeightByHeight) {
+      finalCellWidth = cellWidthByWidth
+      finalCellHeight = Math.min(cellHeightByWidth, maxCellHeight)
+    } else {
+      finalCellWidth = Math.min(cellWidthByHeight, maxCellWidth)
+      finalCellHeight = cellHeightByHeight
+    }
   }
-  
-  // Apply maximum size constraint (để tránh khung quá lớn khi ít ảnh)
-  finalCellSize = Math.min(A4_CONSTANTS.MAX_CELL_SIZE, finalCellSize)
-  
-  // 🔥 ENSURE PERFECT SQUARES - Cả width và height đều bằng nhau
-  let finalCellWidth = finalCellSize
-  let finalCellHeight = finalCellSize
+
+  // Apply minimum size constraints
+  const minSize = A4_CONSTANTS.MIN_CELL_SIZE
+  if (finalCellWidth < minSize || finalCellHeight < minSize) {
+    result.warnings.push(`⚠️ Khung ảnh rất nhỏ (${finalCellWidth}x${finalCellHeight}mm). Khuyến nghị giảm số khung/hàng hoặc số ảnh.`)
+  }
+
+  // Apply maximum size constraints
+  const maxSize = A4_CONSTANTS.MAX_CELL_SIZE
+  finalCellWidth = Math.min(maxSize, finalCellWidth)
+  finalCellHeight = Math.min(maxSize, finalCellHeight)
   
   // Đã xử lý warnings ở trên - xóa duplicate code
   

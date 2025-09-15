@@ -16,6 +16,13 @@ interface ImageGridEditorProps {
   mainTitle?: string
   subTitle?: string
   onTitleChange?: (mainTitle: string, subTitle: string) => void
+  // THÊM: Margin props
+  marginLeft?: number
+  marginRight?: number
+  marginBottom?: number
+  marginHeader?: number
+  // THÊM: Aspect ratio prop
+  aspectRatio?: string
 }
 
 export default function ImageGridEditor({
@@ -27,7 +34,14 @@ export default function ImageGridEditor({
   readonly = false,
   mainTitle = "Nhật ký thi công",
   subTitle = "Hình ảnh thi công",
-  onTitleChange
+  onTitleChange,
+  // NHẬN MARGIN PROPS VỚI GIÁ TRỊ MẶC ĐỊNH
+  marginLeft = 10,
+  marginRight = 10,
+  marginBottom = 10,
+  marginHeader = 45,
+  // NHẬN ASPECT RATIO PROP
+  aspectRatio = "4:3"
 }: ImageGridEditorProps) {
   const { toast } = useToast()
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
@@ -39,10 +53,15 @@ export default function ImageGridEditor({
   const [isEditingMain, setIsEditingMain] = useState(false)
   const [isEditingSub, setIsEditingSub] = useState(false)
 
-  // Sử dụng hàm tính toán thông minh
+  // TÍNH TOÁN VỚI MARGIN TÙY CHỈNH
   const gridCalculation = calculateGridLayout({
     imagesPerPage,
-    imagesPerRow
+    imagesPerRow,
+    marginLeft,
+    marginRight,
+    marginBottom,
+    marginHeader,
+    aspectRatio
   })
 
   // Extract calculated values
@@ -328,13 +347,13 @@ export default function ImageGridEditor({
         boxSizing: 'border-box',
         overflow: 'hidden' // QUAN TRỌNG: Ngăn tràn trang
       }}>
-      {/* Header Section - GIẢM CHIỀU CAO ĐỂ TĂNG KHOẢNG CÁCH CHO KHUNG ẢNH */}
+      {/* Header Section - DYNAMIC HEIGHT VỚI MARGIN TÙY CHỈNH */}
       <div className="text-center" style={{ 
-        height: '45mm', 
+        height: `${marginHeader}mm`, 
         display: 'flex', 
         flexDirection: 'column', 
         justifyContent: 'center',
-        padding: '10mm 10mm 5mm 10mm',
+        padding: `10mm ${marginRight}mm 5mm ${marginLeft}mm`,
         boxSizing: 'border-box'
       }}>
         {/* Main Title - Có thể chỉnh sửa */}
@@ -391,13 +410,13 @@ export default function ImageGridEditor({
         )}
       </div>
 
-      {/* Image Grid Section - TĂNG CHIỀU CAO ĐỂ BÙ CHO HEADER GIẢM */}
+      {/* Image Grid Section - DYNAMIC HEIGHT VỚI MARGIN TÙY CHỈNH */}
       <div className="image-grid-container" style={{ 
-        height: '252mm',
+        height: `${297 - marginHeader - marginBottom}mm`,
         display: 'flex', 
         alignItems: 'flex-start', 
         justifyContent: 'center',
-        padding: '15mm 10mm 10mm 10mm',
+        padding: `0 ${marginRight}mm ${marginBottom}mm ${marginLeft}mm`,
         boxSizing: 'border-box',
         overflow: 'hidden' // QUAN TRỌNG: Ngăn tràn
       }}>
