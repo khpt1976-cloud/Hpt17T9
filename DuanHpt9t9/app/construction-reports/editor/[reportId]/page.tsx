@@ -148,6 +148,45 @@ export default function ReportEditorPage() {
   const [selectedDiaryId, setSelectedDiaryId] = useState("")
   const [useTemplate, setUseTemplate] = useState(false)
   
+  // THÊM: Hàm lưu image settings
+  const saveImageSettings = async () => {
+    try {
+      const settings = {
+        marginLeft,
+        marginRight,
+        marginBottom,
+        marginHeader,
+        imageAspectRatio,
+        centerHorizontally,
+        imagesPerPage,
+        framesPerRow: imagesPerRow,
+        imagePages
+      }
+
+      console.log('💾 Saving image settings:', settings)
+
+      const response = await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          key: 'imageConfig',
+          value: settings,
+          description: 'Image configuration settings'
+        })
+      })
+
+      if (response.ok) {
+        console.log('✅ Image settings saved successfully')
+      } else {
+        console.error('❌ Failed to save image settings')
+      }
+    } catch (error) {
+      console.error('❌ Error saving image settings:', error)
+    }
+  }
+  
   // State to track image pages configuration
   const [imagePagesConfig, setImagePagesConfig] = useState<Record<number, { 
     imagesPerPage: number; 
@@ -4482,7 +4521,10 @@ export default function ReportEditorPage() {
                     max="50"
                     step="1"
                     value={marginLeft}
-                    onChange={(e) => setMarginLeft(Number(e.target.value))}
+                    onChange={(e) => {
+                      setMarginLeft(Number(e.target.value))
+                      setTimeout(() => saveImageSettings(), 100)
+                    }}
                     className="bg-slate-700 border-slate-600 text-white"
                   />
                 </div>
@@ -4497,7 +4539,10 @@ export default function ReportEditorPage() {
                     max="50"
                     step="1"
                     value={marginRight}
-                    onChange={(e) => setMarginRight(Number(e.target.value))}
+                    onChange={(e) => {
+                      setMarginRight(Number(e.target.value))
+                      setTimeout(() => saveImageSettings(), 100)
+                    }}
                     className="bg-slate-700 border-slate-600 text-white"
                   />
                 </div>
@@ -4512,7 +4557,10 @@ export default function ReportEditorPage() {
                     max="50"
                     step="1"
                     value={marginBottom}
-                    onChange={(e) => setMarginBottom(Number(e.target.value))}
+                    onChange={(e) => {
+                      setMarginBottom(Number(e.target.value))
+                      setTimeout(() => saveImageSettings(), 100)
+                    }}
                     className="bg-slate-700 border-slate-600 text-white"
                   />
                 </div>
@@ -4527,7 +4575,10 @@ export default function ReportEditorPage() {
                     max="100"
                     step="1"
                     value={marginHeader}
-                    onChange={(e) => setMarginHeader(Number(e.target.value))}
+                    onChange={(e) => {
+                      setMarginHeader(Number(e.target.value))
+                      setTimeout(() => saveImageSettings(), 100)
+                    }}
                     className="bg-slate-700 border-slate-600 text-white"
                   />
                 </div>
@@ -4546,6 +4597,8 @@ export default function ReportEditorPage() {
                   onChange={(e) => {
                     console.log('🎯 CENTER CHECKBOX CHANGED:', e.target.checked)
                     setCenterHorizontally(e.target.checked)
+                    // Lưu settings sau khi thay đổi
+                    setTimeout(() => saveImageSettings(), 100)
                   }}
                   className="w-4 h-4 text-cyan-400 bg-slate-700 border-slate-600 rounded focus:ring-cyan-400 focus:ring-2"
                 />
@@ -4739,7 +4792,10 @@ export default function ReportEditorPage() {
                     </label>
                     <select
                       value={imageAspectRatio}
-                      onChange={(e) => setImageAspectRatio(e.target.value)}
+                      onChange={(e) => {
+                        setImageAspectRatio(e.target.value)
+                        setTimeout(() => saveImageSettings(), 100)
+                      }}
                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <optgroup label="🌟 Khuyến nghị">
