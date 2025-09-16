@@ -157,8 +157,8 @@ export default function ImageGridEditor({
           throw new Error("File ảnh quá lớn! Vui lòng chọn ảnh nhỏ hơn 10MB.")
         }
 
-      // CROP ẢNH THÀNH HÌNH VUÔNG TRƯỚC KHI LỮU
-      const cropImageToSquare = (file: File): Promise<string> => {
+      // CROP ẢNH THEO TỶ LỆ ĐƯỢC CHỌN
+      const cropImageToAspectRatio = (file: File): Promise<string> => {
         return new Promise((resolve, reject) => {
           const img = new Image()
           const canvas = document.createElement('canvas')
@@ -170,32 +170,61 @@ export default function ImageGridEditor({
           }
           
           img.onload = () => {
-            // Tính kích thước crop (lấy cạnh nhỏ nhất)
-            const size = Math.min(img.width, img.height)
+            // Parse aspect ratio
+            const [widthRatio, heightRatio] = aspectRatio.split(':').map(Number)
+            const targetAspectRatio = widthRatio / heightRatio
             
-            // Set canvas thành hình vuông
-            canvas.width = size
-            canvas.height = size
+            // Calculate crop dimensions
+            let cropWidth: number
+            let cropHeight: number
             
-            // Tính vị trí crop để center ảnh
-            const cropX = (img.width - size) / 2
-            const cropY = (img.height - size) / 2
+            const imageAspectRatio = img.width / img.height
             
-            // Vẽ ảnh đã crop lên canvas
+            if (imageAspectRatio > targetAspectRatio) {
+              // Image is wider than target - crop width
+              cropHeight = img.height
+              cropWidth = cropHeight * targetAspectRatio
+            } else {
+              // Image is taller than target - crop height
+              cropWidth = img.width
+              cropHeight = cropWidth / targetAspectRatio
+            }
+            
+            // Calculate crop position (center crop)
+            const cropX = (img.width - cropWidth) / 2
+            const cropY = (img.height - cropHeight) / 2
+            
+            // Set canvas size to maintain aspect ratio
+            const maxSize = 800 // Max dimension for performance
+            let canvasWidth: number
+            let canvasHeight: number
+            
+            if (cropWidth > cropHeight) {
+              canvasWidth = Math.min(maxSize, cropWidth)
+              canvasHeight = canvasWidth / targetAspectRatio
+            } else {
+              canvasHeight = Math.min(maxSize, cropHeight)
+              canvasWidth = canvasHeight * targetAspectRatio
+            }
+            
+            canvas.width = canvasWidth
+            canvas.height = canvasHeight
+            
+            // Draw cropped image
             ctx.drawImage(
               img,
-              cropX, cropY, size, size,  // Source crop area
-              0, 0, size, size           // Destination area
+              cropX, cropY, cropWidth, cropHeight,  // Source crop area
+              0, 0, canvasWidth, canvasHeight       // Destination area
             )
             
-            // Convert thành base64
+            // Convert to base64
             const croppedImageData = canvas.toDataURL('image/jpeg', 0.9)
             resolve(croppedImageData)
           }
           
           img.onerror = () => reject('Failed to load image')
           
-          // Load ảnh từ file
+          // Load image from file
           const reader = new FileReader()
           reader.onload = (e) => {
             img.src = e.target?.result as string
@@ -204,16 +233,15 @@ export default function ImageGridEditor({
         })
       }
 
-      // Crop ảnh thành hình vuông trước khi lưu
-        // CROP ẢNH THÀNH HÌNH VUÔNG TRƯỚC KHI LỮU
-        const croppedImageData = await cropImageToSquare(file)
-        console.log('✂️ Image cropped to square, length:', croppedImageData.length)
+      // Crop ảnh theo tỷ lệ được chọn
+        const croppedImageData = await cropImageToAspectRatio(file)
+        console.log(`✂️ Image cropped to ${aspectRatio}, length:`, croppedImageData.length)
         
         onImageChange(slotIndex, croppedImageData)
         
         toast({
           title: "✅ Thành công",
-          description: `Đã thêm ảnh "${file.name}" (tự động crop thành hình vuông) vào vị trí ${slotIndex + 1}`,
+          description: `Đã thêm ảnh "${file.name}" (tự động crop theo tỷ lệ ${aspectRatio}) vào vị trí ${slotIndex + 1}`,
         })
       } catch (error) {
         console.error('❌ Error processing image:', error)
@@ -258,7 +286,15 @@ export default function ImageGridEditor({
           // Ensure print compatibility
           printColorAdjust: 'exact',
           WebkitPrintColorAdjust: 'exact',
-        }}
+          // Force aspect ratio with high priority
+          minWidth: `${finalCellWidth}mm`,
+          minHeight: `${finalCellHeight}mm`,
+          maxWidth: `${finalCellWidth}mm`,
+          maxHeight: `${finalCellHeight}mm`,
+          // CSS custom properties for debugging
+          '--cell-width': `${finalCellWidth}mm`,
+          '--cell-height': `${finalCellHeight}mm`,
+        } as React.CSSProperties}
         onClick={() => !isLoading && handleImageSlotClick(slotIndex)}
         title={
           isLoading 
@@ -400,14 +436,23 @@ export default function ImageGridEditor({
           </h3>
         )}
         
-        {/* Show warnings */}
-        {warnings.length > 0 && (
-          <div className="text-yellow-600 text-xs mt-1">
-            {warnings.map((warning, index) => (
-              <p key={index}>{warning}</p>
-            ))}
+        {/* Show aspect ratio info and warnings */}
+        <div className="text-xs mt-1 screen-only">
+          <div className="text-blue-600 mb-1">
+            📐 Tỷ lệ ảnh: {aspectRatio} | Khung: {finalCellWidth}×{finalCellHeight}mm
+            {gridCalculation.aspectRatio.isExact ? ' ✅' : ' ⚠️'}
           </div>
-        )}
+          <div className="text-gray-600 mb-1">
+            📏 Margin: L={marginLeft}mm, R={marginRight}mm, T={marginHeader}mm, B={marginBottom}mm
+          </div>
+          {warnings.length > 0 && (
+            <div className="text-yellow-600">
+              {warnings.map((warning, index) => (
+                <p key={index}>{warning}</p>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Image Grid Section - DYNAMIC HEIGHT VỚI MARGIN TÙY CHỈNH */}
@@ -415,7 +460,7 @@ export default function ImageGridEditor({
         height: `${297 - marginHeader - marginBottom}mm`,
         display: 'flex', 
         alignItems: 'flex-start', 
-        justifyContent: 'center',
+        justifyContent: 'flex-start', // Changed from 'center' to respect margins
         padding: `0 ${marginRight}mm ${marginBottom}mm ${marginLeft}mm`,
         boxSizing: 'border-box',
         overflow: 'hidden' // QUAN TRỌNG: Ngăn tràn
@@ -428,10 +473,9 @@ export default function ImageGridEditor({
             gap: `${gapSize}mm`,
             width: `${totalGridWidth}mm`,
             height: `${totalGridHeight}mm`,
-            justifyContent: 'center',
-            alignItems: 'center',
+            // Remove centering to respect margin positioning
             justifyItems: 'center',
-            alignContent: 'center'
+            alignItems: 'center'
           }}
         >
           {Array.from({ length: imagesPerPage }, (_, index) => renderImageSlot(index))}

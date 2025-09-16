@@ -5,6 +5,7 @@ import type React from "react"
 import { useLanguage } from "@/contexts/language-context"
 import { useToast } from "@/hooks/use-toast"
 import { calculateGridLayout } from "@/utils/grid-calculator"
+import { ASPECT_RATIOS, getRecommendedAspectRatios } from "@/utils/aspect-ratio-constants"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -581,6 +582,12 @@ export default function ReportEditorPage() {
         // Set frames per row from report config
         if (config.soKhungTrenHang) {
           setImagesPerRow(config.soKhungTrenHang)
+        }
+        
+        // Set aspect ratio from report config
+        if (config.aspectRatio) {
+          setImageAspectRatio(config.aspectRatio)
+          console.log(`📐 Setting aspect ratio from report config: ${config.aspectRatio}`)
         }
         
         return // Exit early if report config was found
@@ -4705,11 +4712,20 @@ export default function ReportEditorPage() {
                       onChange={(e) => setImageAspectRatio(e.target.value)}
                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
-                      <option value="1:1">1:1 (Vuông)</option>
-                      <option value="4:3">4:3 (Ngang chuẩn)</option>
-                      <option value="3:4">3:4 (Dọc chuẩn)</option>
-                      <option value="16:9">16:9 (Ngang rộng)</option>
-                      <option value="9:16">9:16 (Dọc rộng)</option>
+                      <optgroup label="🌟 Khuyến nghị">
+                        {getRecommendedAspectRatios().map((ratio) => (
+                          <option key={ratio.value} value={ratio.value}>
+                            {ratio.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="📐 Tất cả tỷ lệ">
+                        {ASPECT_RATIOS.map((ratio) => (
+                          <option key={ratio.value} value={ratio.value}>
+                            {ratio.label} - {ratio.description}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
                     <p className="text-xs text-slate-400 mt-1">
                       💡 Tỷ lệ này sẽ áp dụng cho tất cả khung ảnh trong nhật ký

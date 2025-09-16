@@ -1,19 +1,11 @@
 /**
  * Grid Layout Calculator for A4 Construction Report Pages
  * Tính toán kích thước khung ảnh dựa trên input người dùng và constraints khổ A4
+ * 
+ * VERSION 2.0: Enhanced with flexible aspect ratio support
  */
 
-/**
- * Parse aspect ratio string to width/height ratio
- * @param aspectRatio - String like "4:3", "16:9", etc.
- * @returns Object with width and height ratio
- */
-function parseAspectRatio(aspectRatio: string): { widthRatio: number; heightRatio: number } {
-  const [widthStr, heightStr] = aspectRatio.split(':')
-  const widthRatio = parseInt(widthStr) || 4
-  const heightRatio = parseInt(heightStr) || 3
-  return { widthRatio, heightRatio }
-}
+import { parseAspectRatio, getAspectRatioValue, validateAspectRatioForA4 } from './aspect-ratio-constants'
 
 export interface GridCalculationInput {
   imagesPerPage: number    // Số ảnh muốn chèn
@@ -56,6 +48,14 @@ export interface GridCalculationResult {
     width: number          // mm - Không gian khả dụng cho grid
     height: number         // mm
   }
+  
+  // NEW: Aspect ratio information
+  aspectRatio: {
+    value: string          // Original aspect ratio string (e.g., "4:3")
+    numericValue: number   // Calculated ratio (width/height)
+    actualRatio: number    // Actual ratio of calculated cells
+    isExact: boolean       // Whether calculated cells match desired ratio exactly
+  }
 }
 
 // Constants - Khổ A4 và constraints
@@ -78,7 +78,7 @@ const A4_CONSTANTS = {
   
   // Size constraints
   MIN_CELL_SIZE: 15,      // mm - Minimum readable size
-  MAX_CELL_SIZE: 60,      // mm - Maximum practical size
+  // REMOVED: MAX_CELL_SIZE - không có quy định về kích thước tối đa
   GAP_SIZE: 5,            // mm - Gap between cells
   
   // Margins
@@ -86,7 +86,7 @@ const A4_CONSTANTS = {
 }
 
 /**
- * Tính toán layout grid dựa trên input người dùng - STRICT 4x5 LIMITS
+ * Tính toán layout grid dựa trên input người dùng - ENHANCED WITH ASPECT RATIO SUPPORT
  */
 export function calculateGridLayout(input: GridCalculationInput): GridCalculationResult {
   const { 
@@ -101,7 +101,11 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
     aspectRatio = "4:3"
   } = input
   
-  // Initialize result với margin info
+  // Parse aspect ratio
+  const { widthRatio, heightRatio } = parseAspectRatio(aspectRatio)
+  const desiredAspectRatio = getAspectRatioValue(aspectRatio)
+  
+  // Initialize result với margin info và aspect ratio info
   const result: GridCalculationResult = {
     cellWidth: 0,
     cellHeight: 0,
@@ -122,6 +126,13 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
     availableArea: {
       width: 0,
       height: 0
+    },
+    // NEW: Aspect ratio information
+    aspectRatio: {
+      value: aspectRatio,
+      numericValue: desiredAspectRatio,
+      actualRatio: 0,
+      isExact: false
     }
   }
   
@@ -167,45 +178,88 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
   const availableWidthForCells = availableWidth - totalGapWidth
   const availableHeightForCells = availableHeight - totalGapHeight
   
-  // Parse aspect ratio
-  const { widthRatio, heightRatio } = parseAspectRatio(aspectRatio)
-  const aspectRatioValue = widthRatio / heightRatio
-
-  // Calculate cell dimensions based on aspect ratio
-  const maxCellWidth = Math.floor(availableWidthForCells / imagesPerRow)
-  const maxCellHeight = Math.floor(availableHeightForCells / rows)
-
-  // Calculate optimal cell size based on aspect ratio
+  // Add aspect ratio validation
+  const aspectRatioValidation = validateAspectRatioForA4(aspectRatio, imagesPerRow, rows)
+  result.warnings.push(...aspectRatioValidation.warnings)
+  
+  // THUẬT TOÁN ĐÚNG THEO YÊU CẦU CỦA ANH:
+  // 1. Tính max cell size theo cả 2 chiều
+  // 2. So sánh khoảng dư của cả 2 phương pháp  
+  // 3. Chọn phương pháp có khoảng dư ít hơn (tối ưu hơn)
+  // 4. Giữ nguyên cạnh được chọn
+  
+  // Method 1: Width-constrained (giữ nguyên chiều ngang)
+  const cellWidthByWidth = Math.floor(availableWidthForCells / imagesPerRow)
+  const cellHeightByWidth = Math.floor(cellWidthByWidth / desiredAspectRatio)
+  const totalGridWidthByWidth = (cellWidthByWidth * imagesPerRow) + totalGapWidth
+  const totalGridHeightByWidth = (cellHeightByWidth * rows) + totalGapHeight
+  const remainingWidthByWidth = availableWidth - totalGridWidthByWidth
+  const remainingHeightByWidth = availableHeight - totalGridHeightByWidth
+  
+  // Method 2: Height-constrained (giữ nguyên chiều dọc)
+  const cellHeightByHeight = Math.floor(availableHeightForCells / rows)
+  const cellWidthByHeight = Math.floor(cellHeightByHeight * desiredAspectRatio)
+  const totalGridWidthByHeight = (cellWidthByHeight * imagesPerRow) + totalGapWidth
+  const totalGridHeightByHeight = (cellHeightByHeight * rows) + totalGapHeight
+  const remainingWidthByHeight = availableWidth - totalGridWidthByHeight
+  const remainingHeightByHeight = availableHeight - totalGridHeightByHeight
+  
+  console.log(`🔧 THUẬT TOÁN ĐÚNG:`)
+  console.log(`   Method 1 (Width-constrained): ${cellWidthByWidth}×${cellHeightByWidth}mm → Remaining: ${remainingWidthByWidth}×${remainingHeightByWidth}mm`)
+  console.log(`   Method 2 (Height-constrained): ${cellWidthByHeight}×${cellHeightByHeight}mm → Remaining: ${remainingWidthByHeight}×${remainingHeightByHeight}mm`)
+  
+  // Kiểm tra method nào FIT trong khổ giấy
+  const method1Fits = (remainingWidthByWidth >= 0 && remainingHeightByWidth >= 0)
+  const method2Fits = (remainingWidthByHeight >= 0 && remainingHeightByHeight >= 0)
+  
   let finalCellWidth: number
   let finalCellHeight: number
-
-  // Try fitting by width first
-  const cellWidthByWidth = maxCellWidth
-  const cellHeightByWidth = Math.floor(cellWidthByWidth / aspectRatioValue)
-
-  // Try fitting by height first  
-  const cellHeightByHeight = maxCellHeight
-  const cellWidthByHeight = Math.floor(cellHeightByHeight * aspectRatioValue)
-
-  // Choose the option that fits better
-  if (cellHeightByWidth <= maxCellHeight && cellWidthByWidth <= maxCellWidth) {
-    // Width-constrained fits
+  let chosenMethod: string
+  
+  console.log(`   Method 1 fits: ${method1Fits}, Method 2 fits: ${method2Fits}`)
+  
+  if (method1Fits && method2Fits) {
+    // Cả 2 đều fit → chọn method có khoảng dư ít hơn (tối ưu hơn)
+    const totalRemainingByWidth = remainingWidthByWidth + remainingHeightByWidth
+    const totalRemainingByHeight = remainingWidthByHeight + remainingHeightByHeight
+    
+    if (totalRemainingByWidth <= totalRemainingByHeight) {
+      finalCellWidth = cellWidthByWidth
+      finalCellHeight = cellHeightByWidth
+      chosenMethod = "Width-constrained (cả 2 fit, khoảng dư ít hơn)"
+    } else {
+      finalCellWidth = cellWidthByHeight
+      finalCellHeight = cellHeightByHeight
+      chosenMethod = "Height-constrained (cả 2 fit, khoảng dư ít hơn)"
+    }
+  } else if (method1Fits) {
+    // Chỉ method 1 fit
     finalCellWidth = cellWidthByWidth
     finalCellHeight = cellHeightByWidth
-  } else if (cellWidthByHeight <= maxCellWidth && cellHeightByHeight <= maxCellHeight) {
-    // Height-constrained fits
+    chosenMethod = "Width-constrained (chỉ method này fit)"
+  } else if (method2Fits) {
+    // Chỉ method 2 fit
     finalCellWidth = cellWidthByHeight
     finalCellHeight = cellHeightByHeight
+    chosenMethod = "Height-constrained (chỉ method này fit)"
   } else {
-    // Neither fits perfectly, use smaller option
-    if (cellWidthByWidth * cellHeightByWidth > cellWidthByHeight * cellHeightByHeight) {
+    // Không method nào fit → chọn method ít overflow hơn
+    const overflowByWidth = Math.abs(Math.min(0, remainingWidthByWidth)) + Math.abs(Math.min(0, remainingHeightByWidth))
+    const overflowByHeight = Math.abs(Math.min(0, remainingWidthByHeight)) + Math.abs(Math.min(0, remainingHeightByHeight))
+    
+    if (overflowByWidth <= overflowByHeight) {
       finalCellWidth = cellWidthByWidth
-      finalCellHeight = Math.min(cellHeightByWidth, maxCellHeight)
+      finalCellHeight = cellHeightByWidth
+      chosenMethod = "Width-constrained (không fit, ít overflow hơn)"
     } else {
-      finalCellWidth = Math.min(cellWidthByHeight, maxCellWidth)
+      finalCellWidth = cellWidthByHeight
       finalCellHeight = cellHeightByHeight
+      chosenMethod = "Height-constrained (không fit, ít overflow hơn)"
     }
   }
+  
+  console.log(`   → Chosen: ${chosenMethod}`)
+  console.log(`   → Final cell size: ${finalCellWidth}×${finalCellHeight}mm`)
 
   // Apply minimum size constraints
   const minSize = A4_CONSTANTS.MIN_CELL_SIZE
@@ -213,10 +267,8 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
     result.warnings.push(`⚠️ Khung ảnh rất nhỏ (${finalCellWidth}x${finalCellHeight}mm). Khuyến nghị giảm số khung/hàng hoặc số ảnh.`)
   }
 
-  // Apply maximum size constraints
-  const maxSize = A4_CONSTANTS.MAX_CELL_SIZE
-  finalCellWidth = Math.min(maxSize, finalCellWidth)
-  finalCellHeight = Math.min(maxSize, finalCellHeight)
+  // REMOVED: MAX_CELL_SIZE constraint - không có quy định về kích thước tối đa
+  // Chỉ kiểm tra overflow theo chiều dọc và thông báo
   
   // Đã xử lý warnings ở trên - xóa duplicate code
   
@@ -224,16 +276,38 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
   const totalGridWidth = (finalCellWidth * imagesPerRow) + totalGapWidth
   const totalGridHeight = (finalCellHeight * rows) + totalGapHeight
   
-  // Check if grid fits in available area
-  if (totalGridWidth > A4_CONSTANTS.AVAILABLE_WIDTH) {
-    result.errors.push(`Grid quá rộng (${totalGridWidth}mm > ${A4_CONSTANTS.AVAILABLE_WIDTH}mm)`)
-    return result
+  // Bước 4: Kiểm tra overflow theo chiều dọc và tính số ảnh bị tràn
+  const totalRequiredHeight = totalGridHeight + marginHeader + marginBottom
+  if (totalRequiredHeight > A4_CONSTANTS.PAPER_HEIGHT) {
+    const overflowHeight = totalRequiredHeight - A4_CONSTANTS.PAPER_HEIGHT
+    const availableHeightForGrid = A4_CONSTANTS.PAPER_HEIGHT - marginHeader - marginBottom
+    const maxRowsThatFit = Math.floor((availableHeightForGrid + A4_CONSTANTS.GAP_SIZE) / (finalCellHeight + A4_CONSTANTS.GAP_SIZE))
+    const maxImagesThatFit = maxRowsThatFit * imagesPerRow
+    const overflowImages = imagesPerPage - maxImagesThatFit
+    
+    result.warnings.push(`⚠️ OVERFLOW THEO CHIỀU DỌC:`)
+    result.warnings.push(`   - Tổng chiều cao cần: ${totalRequiredHeight}mm > Khổ giấy: ${A4_CONSTANTS.PAPER_HEIGHT}mm`)
+    result.warnings.push(`   - Vượt quá: ${overflowHeight}mm`)
+    result.warnings.push(`   - Số hàng hiện tại: ${rows} hàng`)
+    result.warnings.push(`   - Số hàng tối đa vừa: ${maxRowsThatFit} hàng`)
+    result.warnings.push(`   - Số ảnh hiện tại: ${imagesPerPage} ảnh`)
+    result.warnings.push(`   - Số ảnh tối đa vừa: ${maxImagesThatFit} ảnh`)
+    result.warnings.push(`   → ${overflowImages} ảnh bị tràn và cần thay đổi lại!`)
   }
   
-  if (totalGridHeight > A4_CONSTANTS.AVAILABLE_HEIGHT) {
-    result.errors.push(`Grid quá cao (${totalGridHeight}mm > ${A4_CONSTANTS.AVAILABLE_HEIGHT}mm)`)
-    return result
+  // Thông tin về chiều ngang (không block, chỉ thông báo)
+  const totalRequiredWidth = totalGridWidth + marginLeft + marginRight
+  if (totalRequiredWidth > A4_CONSTANTS.PAPER_WIDTH) {
+    result.warnings.push(`⚠️ Tổng chiều rộng vượt quá khổ giấy: ${totalRequiredWidth}mm > ${A4_CONSTANTS.PAPER_WIDTH}mm`)
+    result.warnings.push(`   - Chiều rộng grid: ${totalGridWidth}mm`)
+    result.warnings.push(`   - Margin left: ${marginLeft}mm`)
+    result.warnings.push(`   - Margin right: ${marginRight}mm`)
   }
+  
+  // Calculate actual aspect ratio and check accuracy
+  const actualAspectRatio = finalCellWidth / finalCellHeight
+  const aspectRatioDifference = Math.abs(actualAspectRatio - desiredAspectRatio)
+  const isExactRatio = aspectRatioDifference < 0.05 // 5% tolerance
   
   // Success - populate result
   result.cellWidth = finalCellWidth
@@ -242,12 +316,23 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
   result.totalGridHeight = totalGridHeight
   result.isValid = true
   
-  // Debug console
+  // Update aspect ratio information
+  result.aspectRatio.actualRatio = actualAspectRatio
+  result.aspectRatio.isExact = isExactRatio
+  
+  // Debug console with aspect ratio info
   console.log(`🧮 Grid calculation: ${imagesPerPage} ảnh, ${imagesPerRow} cột → ${rows} hàng → ${finalCellWidth}×${finalCellHeight}mm → Total: ${totalGridWidth}×${totalGridHeight}mm`)
+  console.log(`📐 Aspect ratio: Desired ${aspectRatio} (${desiredAspectRatio.toFixed(3)}) → Actual ${actualAspectRatio.toFixed(3)} → ${isExactRatio ? '✅ Exact' : '⚠️ Approximate'}`)
+  console.log(`📏 Input margins: L=${marginLeft}, R=${marginRight}, B=${marginBottom}, H=${marginHeader}`)
+  console.log(`📏 Available space: ${availableWidth}×${availableHeight}mm → Cells: ${availableWidthForCells}×${availableHeightForCells}mm`)
   
   // Add informational warnings
   if (finalCellWidth < 30 || finalCellHeight < 30) {
     result.warnings.push("Khung ảnh khá nhỏ, có thể khó nhìn khi in.")
+  }
+  
+  if (!isExactRatio) {
+    result.warnings.push(`Tỷ lệ thực tế ${actualAspectRatio.toFixed(2)}:1 khác với tỷ lệ mong muốn ${aspectRatio}`)
   }
   
   if (rows === 1 && imagesPerPage < imagesPerRow) {
@@ -258,14 +343,17 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
 }
 
 /**
- * Đề xuất layout tối ưu cho số ảnh cho trước
+ * Đề xuất layout tối ưu cho số ảnh cho trước với aspect ratio
  */
-export function suggestOptimalLayout(imagesPerPage: number): GridCalculationInput[] {
+export function suggestOptimalLayout(
+  imagesPerPage: number, 
+  aspectRatio: string = "4:3"
+): GridCalculationInput[] {
   const suggestions: GridCalculationInput[] = []
   
   // Try different combinations
   for (let imagesPerRow = 1; imagesPerRow <= A4_CONSTANTS.MAX_COLS; imagesPerRow++) {
-    const input: GridCalculationInput = { imagesPerPage, imagesPerRow }
+    const input: GridCalculationInput = { imagesPerPage, imagesPerRow, aspectRatio }
     const result = calculateGridLayout(input)
     
     if (result.isValid && result.errors.length === 0) {
@@ -273,12 +361,47 @@ export function suggestOptimalLayout(imagesPerPage: number): GridCalculationInpu
     }
   }
   
-  // Sort by cell size (larger is better)
+  // Sort by multiple criteria: aspect ratio accuracy, then cell size
   return suggestions.sort((a, b) => {
     const resultA = calculateGridLayout(a)
     const resultB = calculateGridLayout(b)
+    
+    // Priority 1: Exact aspect ratio match
+    if (resultA.aspectRatio.isExact && !resultB.aspectRatio.isExact) return -1
+    if (!resultA.aspectRatio.isExact && resultB.aspectRatio.isExact) return 1
+    
+    // Priority 2: Cell area (larger is better)
     const areaA = resultA.cellWidth * resultA.cellHeight
     const areaB = resultB.cellWidth * resultB.cellHeight
+    return areaB - areaA
+  })
+}
+
+/**
+ * Get optimal aspect ratio suggestions for given layout constraints
+ */
+export function suggestAspectRatiosForLayout(
+  imagesPerPage: number,
+  imagesPerRow: number
+): { aspectRatio: string; result: GridCalculationResult }[] {
+  const suggestions: { aspectRatio: string; result: GridCalculationResult }[] = []
+  
+  // Test common aspect ratios
+  const testRatios = ["1:1", "4:3", "3:2", "16:9", "3:4", "2:3"]
+  
+  for (const ratio of testRatios) {
+    const input: GridCalculationInput = { imagesPerPage, imagesPerRow, aspectRatio: ratio }
+    const result = calculateGridLayout(input)
+    
+    if (result.isValid && result.errors.length === 0) {
+      suggestions.push({ aspectRatio: ratio, result })
+    }
+  }
+  
+  // Sort by cell area (larger is better)
+  return suggestions.sort((a, b) => {
+    const areaA = a.result.cellWidth * a.result.cellHeight
+    const areaB = b.result.cellWidth * b.result.cellHeight
     return areaB - areaA
   })
 }

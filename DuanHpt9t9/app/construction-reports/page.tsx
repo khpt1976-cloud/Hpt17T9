@@ -29,6 +29,7 @@ import { useLanguage } from "@/contexts/language-context"
 import TemplateUploadSection from "@/components/template-upload-section"
 import { getWordPageCount } from "@/lib/word-page-counter"
 import { DatabaseStorage } from "@/lib/storage"
+import { ASPECT_RATIOS, getRecommendedAspectRatios } from "@/utils/aspect-ratio-constants"
 
 import { useRouter } from "next/navigation"
 
@@ -190,6 +191,8 @@ export default function ConstructionDiarysPage() {
   const [framesPerRow, setFramesPerRow] = useState<number>(2)
   const [saveAsDefault, setSaveAsDefault] = useState<boolean>(false)
   const [useTemplate, setUseTemplate] = useState<boolean>(true)
+  // NEW: Aspect ratio state
+  const [selectedAspectRatio, setSelectedAspectRatio] = useState<string>("4:3")
 
   // Persist dialog values to localStorage to avoid accidental resets
   useEffect(() => {
@@ -199,11 +202,12 @@ export default function ConstructionDiarysPage() {
         template: selectedDiaryTemplate,
         imagePages: Math.max(1, Math.min(100, Number(imagePages) || 1)),
         imagesPerPage: Math.max(1, Math.min(20, Number(imagesPerPage) || 1)),
-        framesPerRow: Math.max(1, Math.min(4, Number(framesPerRow) || 2))
+        framesPerRow: Math.max(1, Math.min(4, Number(framesPerRow) || 2)),
+        aspectRatio: selectedAspectRatio
       }
       localStorage.setItem('diary-default-settings.temp', JSON.stringify(settings))
     } catch {}
-  }, [useTemplate, selectedDiaryTemplate, imagePages, imagesPerPage, framesPerRow])
+  }, [useTemplate, selectedDiaryTemplate, imagePages, imagesPerPage, framesPerRow, selectedAspectRatio])
 
   // Sync imageConfig with dialog values for real-time display update (but don't trigger auto-save)
   useEffect(() => {
@@ -506,6 +510,7 @@ export default function ConstructionDiarysPage() {
         imagePages: soTrangAnh,
         imagesPerPage: Math.max(1, Math.min(20, Number(imagesPerPage) || 1)),
         framesPerRow: Math.max(1, Math.min(4, Number(framesPerRow) || 2)),
+        aspectRatio: selectedAspectRatio,
         // Thông tin về nhật ký mẫu
         selectedDiaryId: selectedDiary?.id || "",
         soTrangMau,
@@ -546,6 +551,7 @@ export default function ConstructionDiarysPage() {
       soTrangAnh,
       soAnhTrenTrang: Math.max(1, Math.min(20, Number(imagesPerPage) || 1)),
       soKhungTrenHang: Math.max(1, Math.min(4, Number(framesPerRow) || 2)),
+      aspectRatio: selectedAspectRatio,
       tongSoTrang,
       useTemplate: useTemplate && selectedDiaryTemplate !== "none",
       existingDiaries: existingDiaries.map(d => ({
@@ -562,6 +568,7 @@ export default function ConstructionDiarysPage() {
     setImagePages(2)
     setImagesPerPage(4)
     setFramesPerRow(2)
+    setSelectedAspectRatio("4:3")
     setSaveAsDefault(false)
     setShowAddDiaryDialog(false)
 
@@ -2477,7 +2484,7 @@ export default function ConstructionDiarysPage() {
                   </Select>
                 )}
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <Label htmlFor="image-pages">Số trang ảnh</Label>
                   <Input
@@ -2502,6 +2509,8 @@ export default function ConstructionDiarysPage() {
                     className="bg-slate-700 border-slate-600"
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="frames-per-row">Khung/hàng</Label>
                   <Input
@@ -2513,6 +2522,29 @@ export default function ConstructionDiarysPage() {
                     onChange={(e) => setFramesPerRow(Math.max(1, Math.min(4, Number(e.target.value) || 2)))}
                     className="bg-slate-700 border-slate-600"
                   />
+                </div>
+                <div>
+                  <Label htmlFor="aspect-ratio">Tỷ lệ ảnh</Label>
+                  <Select value={selectedAspectRatio} onValueChange={setSelectedAspectRatio}>
+                    <SelectTrigger className="bg-slate-700 border-slate-600">
+                      <SelectValue placeholder="Chọn tỷ lệ ảnh..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-700 border-slate-600">
+                      {getRecommendedAspectRatios().map((ratio) => (
+                        <SelectItem key={ratio.value} value={ratio.value}>
+                          {ratio.label}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="separator" disabled className="text-slate-400">
+                        ── Tất cả tỷ lệ ──
+                      </SelectItem>
+                      {ASPECT_RATIOS.map((ratio) => (
+                        <SelectItem key={ratio.value} value={ratio.value}>
+                          {ratio.label} - {ratio.description}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
