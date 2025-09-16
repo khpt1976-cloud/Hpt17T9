@@ -148,6 +148,24 @@ export default function ReportEditorPage() {
   const [selectedDiaryId, setSelectedDiaryId] = useState("")
   const [useTemplate, setUseTemplate] = useState(false)
   
+  // Dialog-specific states (không ảnh hưởng đến global state)
+  const [dialogCenterHorizontally, setDialogCenterHorizontally] = useState(false)
+  const [dialogImageAspectRatio, setDialogImageAspectRatio] = useState("4:3")
+  
+  // Load dialog settings from localStorage
+  const loadDialogSettings = () => {
+    const saved = localStorage.getItem("diary-default-settings")
+    if (saved) {
+      try {
+        const settings = JSON.parse(saved)
+        setDialogCenterHorizontally(settings.centerHorizontally || false)
+        setDialogImageAspectRatio(settings.imageAspectRatio || "4:3")
+      } catch (e) {
+        console.warn('Failed to load dialog settings:', e)
+      }
+    }
+  }
+  
   // THÊM: Hàm lưu image settings
   const saveImageSettings = async () => {
     try {
@@ -191,7 +209,9 @@ export default function ReportEditorPage() {
   const [imagePagesConfig, setImagePagesConfig] = useState<Record<number, { 
     imagesPerPage: number; 
     imagesPerRow: number; 
-    images: string[] 
+    images: string[];
+    centerHorizontally?: boolean;
+    imageAspectRatio?: string;
   }>>({})
 
   // ✅ Refs để access state mới nhất trong callbacks
@@ -363,7 +383,9 @@ export default function ReportEditorPage() {
                   7: {
                     imagesPerPage: 20,
                     imagesPerRow: 4,
-                    images: Array(20).fill(null)
+                    images: Array(20).fill(null),
+                    centerHorizontally: false,
+                    imageAspectRatio: "4:3"
                   }
                 }
               }
@@ -392,7 +414,9 @@ export default function ReportEditorPage() {
         7: {
           imagesPerPage: 20,
           imagesPerRow: 4,
-          images: Array(20).fill(null)
+          images: Array(20).fill(null),
+          centerHorizontally: false,
+          imageAspectRatio: "4:3"
         }
       }))
     } else {
@@ -1448,14 +1472,16 @@ export default function ReportEditorPage() {
     setShowAddDiaryDialog(true)
     // Load existing diaries when dialog opens
     loadExistingDiaries()
+    // Load dialog settings from localStorage
+    loadDialogSettings()
   }
 
   // Generate HTML for image page - Enhanced with Grid Calculator
   const generateImagePageHTML = (pageData: any) => {
-    const { imagesPerPage, imagesPerRow, images, pageNumber } = pageData
+    const { imagesPerPage, imagesPerRow, images, pageNumber, centerHorizontally: pageCenterHorizontally, imageAspectRatio: pageImageAspectRatio } = pageData
     const rows = Math.ceil(imagesPerPage / imagesPerRow)
     
-    // ✅ SỬA: Sử dụng calculateGridLayout để tính toán chính xác
+    // ✅ SỬA: Sử dụng calculateGridLayout để tính toán chính xác với config riêng của trang
     const gridCalculation = calculateGridLayout({
       imagesPerPage,
       imagesPerRow,
@@ -1463,8 +1489,8 @@ export default function ReportEditorPage() {
       marginRight,
       marginBottom,
       marginHeader,
-      aspectRatio: imageAspectRatio,
-      centerHorizontally
+      aspectRatio: pageImageAspectRatio || imageAspectRatio,
+      centerHorizontally: pageCenterHorizontally ?? centerHorizontally
     })
     
     console.log(`🖼️ [GENERATE HTML] Grid calculation for page ${pageNumber}:`, gridCalculation)
@@ -1889,8 +1915,8 @@ export default function ReportEditorPage() {
         marginRight,
         marginBottom,
         marginHeader,
-        imageAspectRatio,
-        centerHorizontally
+        imageAspectRatio: dialogImageAspectRatio,
+        centerHorizontally: dialogCenterHorizontally
       }))
     }
 
@@ -1912,7 +1938,9 @@ export default function ReportEditorPage() {
           type: 'image-page',
           imagesPerPage,
           imagesPerRow,
-          images: Array(imagesPerPage).fill(null) // Empty slots for images
+          images: Array(imagesPerPage).fill(null), // Empty slots for images
+          centerHorizontally: dialogCenterHorizontally,
+          imageAspectRatio: dialogImageAspectRatio
         })
       }
       console.log("🖼️ Creating image pages:", newImagePagesData)
@@ -1935,7 +1963,9 @@ export default function ReportEditorPage() {
         updatedImagePagesConfig[pageData.pageNumber] = {
           imagesPerPage: pageData.imagesPerPage,
           imagesPerRow: pageData.imagesPerRow,
-          images: pageData.images
+          images: pageData.images,
+          centerHorizontally: pageData.centerHorizontally,
+          imageAspectRatio: pageData.imageAspectRatio
         }
         console.log(`🖼️ Set imagePagesConfig for page ${pageData.pageNumber}:`, updatedImagePagesConfig[pageData.pageNumber])
       })
@@ -3555,7 +3585,9 @@ export default function ReportEditorPage() {
             updated[pageNumber] = {
               imagesPerPage: imagesPerPage,
               imagesPerRow: imagesPerRow,
-              images: Array(imagesPerPage).fill(null)
+              images: Array(imagesPerPage).fill(null),
+              centerHorizontally: centerHorizontally,
+              imageAspectRatio: imageAspectRatio
             }
           }
           updated[pageNumber].images[slotIndex] = imageData
@@ -4080,8 +4112,8 @@ export default function ReportEditorPage() {
                 marginRight={marginRight}
                 marginBottom={marginBottom}
                 marginHeader={marginHeader}
-                aspectRatio={imageAspectRatio}
-                centerHorizontally={centerHorizontally}
+                aspectRatio={imagePagesConfig[currentPage].imageAspectRatio || imageAspectRatio}
+                centerHorizontally={imagePagesConfig[currentPage].centerHorizontally ?? centerHorizontally}
                 onImageChange={(slotIndex, imageData) => {
                   console.log(`🖼️ Image changed: page ${currentPage}, slot ${slotIndex}`)
                   
@@ -4092,7 +4124,9 @@ export default function ReportEditorPage() {
                       updated[currentPage] = {
                         imagesPerPage: 4,
                         imagesPerRow: 2,
-                        images: Array(4).fill(null)
+                        images: Array(4).fill(null),
+                        centerHorizontally: centerHorizontally,
+                        imageAspectRatio: imageAspectRatio
                       }
                     }
                     updated[currentPage].images[slotIndex] = imageData
@@ -4640,12 +4674,10 @@ export default function ReportEditorPage() {
                 <input
                   type="checkbox"
                   id="center-horizontally"
-                  checked={centerHorizontally}
+                  checked={dialogCenterHorizontally}
                   onChange={(e) => {
-                    console.log('🎯 CENTER CHECKBOX CHANGED:', e.target.checked)
-                    setCenterHorizontally(e.target.checked)
-                    // Lưu settings sau khi thay đổi
-                    setTimeout(() => saveImageSettings(), 100)
+                    console.log('🎯 DIALOG CENTER CHECKBOX CHANGED:', e.target.checked)
+                    setDialogCenterHorizontally(e.target.checked)
                   }}
                   className="w-4 h-4 text-cyan-400 bg-slate-700 border-slate-600 rounded focus:ring-cyan-400 focus:ring-2"
                 />
@@ -4838,10 +4870,10 @@ export default function ReportEditorPage() {
                       📐 Tỷ lệ ảnh
                     </label>
                     <select
-                      value={imageAspectRatio}
+                      value={dialogImageAspectRatio}
                       onChange={(e) => {
-                        setImageAspectRatio(e.target.value)
-                        setTimeout(() => saveImageSettings(), 100)
+                        console.log('📐 DIALOG ASPECT RATIO CHANGED:', e.target.value)
+                        setDialogImageAspectRatio(e.target.value)
                       }}
                       className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
