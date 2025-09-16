@@ -1,5 +1,5 @@
 # Tên của quy trình
-name: Deploy to Production Server
+name: Deploy Next.js to Production Server
 
 # Chạy quy trình này khi có code mới được đẩy lên nhánh 'main'
 on:
@@ -10,7 +10,7 @@ on:
 # Các công việc cần làm
 jobs:
   deploy:
-    name: Deploy Code to Server
+    name: Deploy Code and Rebuild on Server
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +25,7 @@ jobs:
       - name: Adding Known Hosts
         run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
-      # Bước 3: Đăng nhập vào máy chủ và chạy lệnh triển khai
+      # Bước 3: Đăng nhập vào máy chủ và chạy chuỗi lệnh triển khai
       - name: Deploying to Server
         uses: appleboy/ssh-action@master
         with:
@@ -34,16 +34,29 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             echo "--- Starting deployment on server ---"
-            # Di chuyển đến đúng thư mục dự án trên máy chủ
+            
+            # Di chuyển đến đúng thư mục dự án
             cd /var/www/Hpt10T9
             
-            echo "--- Pulling latest code from GitHub main branch ---"
+            echo "--- Pulling latest code from GitHub ---"
             git pull origin main
             
-            echo "--- Rebuilding and restarting Docker containers ---"
-            docker-compose up -d --build
+            echo "--- Installing/updating dependencies ---"
+            # Lệnh này sẽ cài đặt các thư viện cần thiết cho dự án
+            npm install
             
-            echo "--- Cleaning up old Docker images ---"
-            docker image prune -f
+            echo "--- Building the Next.js application ---"
+            # Lệnh này sẽ xây dựng lại ứng dụng của bạn
+            npm run build
+            
+            echo "--- Restarting the application ---"
+            # Đây là bước quan trọng để ứng dụng chạy với code mới.
+            # Chúng ta cần một cách để khởi động lại ứng dụng.
+            # Nếu bạn đang dùng PM2, lệnh sẽ là "pm2 restart <tên_app>".
+            # Nếu bạn đang chạy bằng "npm start", chúng ta cần tìm và chạy lại nó.
+            # Tạm thời, chúng ta sẽ dùng pm2 làm ví dụ.
+            # Hãy đảm bảo bạn đã cài PM2 trên máy chủ: npm install -g pm2
+            # Và đã khởi động ứng dụng bằng PM2: pm2 start npm --name "Hpt10T9" -- start
+            pm2 restart Hpt10T9 || pm2 start npm --name "Hpt10T9" -- start
             
             echo "--- Deployment successful! ---"
