@@ -1450,29 +1450,72 @@ export default function ReportEditorPage() {
     loadExistingDiaries()
   }
 
-  // Generate HTML for image page - Simple Table Approach
+  // Generate HTML for image page - Enhanced with Grid Calculator
   const generateImagePageHTML = (pageData: any) => {
     const { imagesPerPage, imagesPerRow, images, pageNumber } = pageData
     const rows = Math.ceil(imagesPerPage / imagesPerRow)
     
-    // Calculate cell dimensions for A4 page
-    const cellWidth = Math.floor(160 / imagesPerRow) // 160mm available width
-    const cellHeight = Math.floor(240 / rows) // Much more height for full image display
+    // ✅ SỬA: Sử dụng calculateGridLayout để tính toán chính xác
+    const gridCalculation = calculateGridLayout({
+      imagesPerPage,
+      imagesPerRow,
+      marginLeft,
+      marginRight,
+      marginBottom,
+      marginHeader,
+      aspectRatio: imageAspectRatio,
+      centerHorizontally
+    })
+    
+    console.log(`🖼️ [GENERATE HTML] Grid calculation for page ${pageNumber}:`, gridCalculation)
+    
+    // Sử dụng kết quả tính toán thực tế
+    const cellWidth = gridCalculation.cellWidth
+    const cellHeight = gridCalculation.cellHeight
+    const actualMarginLeft = gridCalculation.margins.left
+    const actualMarginRight = gridCalculation.margins.right
+    const actualMarginBottom = gridCalculation.margins.bottom
+    const actualMarginHeader = gridCalculation.margins.header
     
     let html = `
       <style>
-        table {
+        @page {
+          margin: ${actualMarginHeader}mm ${actualMarginRight}mm ${actualMarginBottom}mm ${actualMarginLeft}mm;
+        }
+        
+        .page-container {
           width: 100%;
+          max-width: 210mm;
+          margin: 0 auto;
+          padding: 0;
+          font-family: Arial, sans-serif;
+          box-sizing: border-box;
+          min-height: calc(297mm - ${actualMarginHeader}mm - ${actualMarginBottom}mm);
+        }
+        
+        .content-area {
+          width: calc(210mm - ${actualMarginLeft}mm - ${actualMarginRight}mm);
+          ${centerHorizontally ? 'margin: 0 auto;' : `margin-left: 0; margin-right: auto;`}
+          padding: 10mm 0;
+        }
+        
+        table {
+          width: ${gridCalculation.totalGridWidth}mm;
+          ${centerHorizontally ? 'margin: 0 auto;' : 'margin: 0;'}
           border-collapse: separate;
-          border-spacing: 8px;
+          border-spacing: 5mm;
         }
         
         .image-slot-cell {
+          width: ${cellWidth}mm;
+          height: ${cellHeight}mm;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 10px;
+          padding: 2mm;
           box-sizing: border-box;
+          border: 1px solid #ddd;
+          background-color: #f9f9f9;
         }
         
         .image-slot-cell img {
@@ -1482,19 +1525,27 @@ export default function ReportEditorPage() {
           max-height: 95%;
           object-fit: contain;
           object-position: center;
-          border-radius: 4px;
+          border-radius: 2px;
           display: block;
           margin: 0 auto;
         }
-      </style>
-      <div style="width: 100%; max-width: 210mm; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
-        <div style="text-align: center; margin-bottom: 20px;">
-          <h2 style="color: #1e40af; margin: 0 0 10px 0; font-size: 18px;">Báo cáo thi công</h2>
-          <p style="color: #64748b; margin: 0; font-size: 12px;">Trang ${pageNumber}</p>
-          <h3 style="color: #374151; margin: 15px 0; font-size: 14px;">Hình ảnh thi công</h3>
-        </div>
         
-        <table style="width: 100%; border-collapse: separate; border-spacing: 10px; margin: 20px auto;">
+        .empty-slot {
+          color: #999;
+          font-size: 12px;
+          text-align: center;
+        }
+      </style>
+      <div class="page-container">
+        <div class="content-area">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #1e40af; margin: 0 0 10px 0; font-size: 18px;">Báo cáo thi công</h2>
+            <p style="color: #64748b; margin: 0; font-size: 12px;">Trang ${pageNumber}</p>
+            <h3 style="color: #374151; margin: 15px 0; font-size: 14px;">Hình ảnh thi công</h3>
+            ${centerHorizontally ? '<p style="color: #10b981; font-size: 10px; margin: 5px 0;">🎯 Layout căn giữa theo chiều ngang</p>' : ''}
+          </div>
+          
+          <table>
     `
     
     let imageIndex = 0
@@ -1508,10 +1559,8 @@ export default function ReportEditorPage() {
         const imageUrl = typeof imageData === 'string' ? imageData : imageData?.url
         
         const cellStyle = `
-          width: ${cellWidth}mm;
-          height: ${cellHeight}mm;
-          border: 3px ${hasImage ? 'solid #10b981' : 'dashed #3b82f6'};
-          border-radius: 8px;
+          border: 2px ${hasImage ? 'solid #10b981' : 'dashed #3b82f6'};
+          border-radius: 4px;
           text-align: center;
           vertical-align: middle;
           cursor: pointer;
@@ -1519,11 +1568,6 @@ export default function ReportEditorPage() {
           position: relative;
           transition: all 0.2s ease;
           overflow: visible;
-          padding: 5px;
-          box-sizing: border-box;
-          display: flex;
-          align-items: center;
-          justify-content: center;
         `
         
         html += `
@@ -1607,7 +1651,9 @@ export default function ReportEditorPage() {
           color: #64748b;
           font-size: 11px;
         ">
-          Trang ${pageNumber} - ${imagesPerPage} ảnh (${imagesPerRow} ảnh/hàng) - ${rows} hàng
+          Trang ${pageNumber} - ${imagesPerPage} ảnh (${imagesPerRow} ảnh/hàng) - ${rows} hàng<br/>
+          Khung: ${cellWidth}×${cellHeight}mm | Margins: L=${actualMarginLeft}mm R=${actualMarginRight}mm<br/>
+          ${centerHorizontally ? '🎯 Căn giữa theo chiều ngang: ACTIVE' : '📍 Căn trái (không căn giữa)'}
         </div>
         
         <script>
@@ -1723,6 +1769,7 @@ export default function ReportEditorPage() {
             });
           });
         </script>
+        </div>
       </div>
     `
     
