@@ -152,6 +152,12 @@ export default function ReportEditorPage() {
   const [dialogCenterHorizontally, setDialogCenterHorizontally] = useState(false)
   const [dialogImageAspectRatio, setDialogImageAspectRatio] = useState("4:3")
   
+  // Dialog-specific margin states
+  const [dialogMarginLeft, setDialogMarginLeft] = useState(10)
+  const [dialogMarginRight, setDialogMarginRight] = useState(10)
+  const [dialogMarginBottom, setDialogMarginBottom] = useState(10)
+  const [dialogMarginHeader, setDialogMarginHeader] = useState(45)
+  
   // Load dialog settings from localStorage
   const loadDialogSettings = () => {
     const saved = localStorage.getItem("diary-default-settings")
@@ -160,6 +166,10 @@ export default function ReportEditorPage() {
         const settings = JSON.parse(saved)
         setDialogCenterHorizontally(settings.centerHorizontally || false)
         setDialogImageAspectRatio(settings.imageAspectRatio || "4:3")
+        setDialogMarginLeft(settings.marginLeft || 10)
+        setDialogMarginRight(settings.marginRight || 10)
+        setDialogMarginBottom(settings.marginBottom || 10)
+        setDialogMarginHeader(settings.marginHeader || 45)
       } catch (e) {
         console.warn('Failed to load dialog settings:', e)
       }
@@ -1478,17 +1488,28 @@ export default function ReportEditorPage() {
 
   // Generate HTML for image page - Enhanced with Grid Calculator
   const generateImagePageHTML = (pageData: any) => {
-    const { imagesPerPage, imagesPerRow, images, pageNumber, centerHorizontally: pageCenterHorizontally, imageAspectRatio: pageImageAspectRatio } = pageData
+    const { 
+      imagesPerPage, 
+      imagesPerRow, 
+      images, 
+      pageNumber, 
+      centerHorizontally: pageCenterHorizontally, 
+      imageAspectRatio: pageImageAspectRatio,
+      marginLeft: pageMarginLeft,
+      marginRight: pageMarginRight,
+      marginBottom: pageMarginBottom,
+      marginHeader: pageMarginHeader
+    } = pageData
     const rows = Math.ceil(imagesPerPage / imagesPerRow)
     
-    // ✅ SỬA: Sử dụng calculateGridLayout để tính toán chính xác với config riêng của trang
+    // ✅ SỬA: Sử dụng calculateGridLayout với margin từ pageData hoặc fallback về global
     const gridCalculation = calculateGridLayout({
       imagesPerPage,
       imagesPerRow,
-      marginLeft,
-      marginRight,
-      marginBottom,
-      marginHeader,
+      marginLeft: pageMarginLeft || marginLeft,
+      marginRight: pageMarginRight || marginRight,
+      marginBottom: pageMarginBottom || marginBottom,
+      marginHeader: pageMarginHeader || marginHeader,
       aspectRatio: pageImageAspectRatio || imageAspectRatio,
       centerHorizontally: pageCenterHorizontally ?? centerHorizontally
     })
@@ -1911,10 +1932,10 @@ export default function ReportEditorPage() {
         imagePages,
         imagesPerPage,
         imagesPerRow,
-        marginLeft,
-        marginRight,
-        marginBottom,
-        marginHeader,
+        marginLeft: dialogMarginLeft,
+        marginRight: dialogMarginRight,
+        marginBottom: dialogMarginBottom,
+        marginHeader: dialogMarginHeader,
         imageAspectRatio: dialogImageAspectRatio,
         centerHorizontally: dialogCenterHorizontally
       }))
@@ -1940,7 +1961,11 @@ export default function ReportEditorPage() {
           imagesPerRow,
           images: Array(imagesPerPage).fill(null), // Empty slots for images
           centerHorizontally: dialogCenterHorizontally,
-          imageAspectRatio: dialogImageAspectRatio
+          imageAspectRatio: dialogImageAspectRatio,
+          marginLeft: dialogMarginLeft,
+          marginRight: dialogMarginRight,
+          marginBottom: dialogMarginBottom,
+          marginHeader: dialogMarginHeader
         })
       }
       console.log("🖼️ Creating image pages:", newImagePagesData)
@@ -1965,7 +1990,11 @@ export default function ReportEditorPage() {
           imagesPerRow: pageData.imagesPerRow,
           images: pageData.images,
           centerHorizontally: pageData.centerHorizontally,
-          imageAspectRatio: pageData.imageAspectRatio
+          imageAspectRatio: pageData.imageAspectRatio,
+          marginLeft: pageData.marginLeft,
+          marginRight: pageData.marginRight,
+          marginBottom: pageData.marginBottom,
+          marginHeader: pageData.marginHeader
         }
         console.log(`🖼️ Set imagePagesConfig for page ${pageData.pageNumber}:`, updatedImagePagesConfig[pageData.pageNumber])
       })
@@ -3596,15 +3625,22 @@ export default function ReportEditorPage() {
         })
 
         // Create updated page config for immediate use
+        const existingConfig = imagePagesConfig[pageNumber]
         const updatedPageConfig = {
           imagesPerPage: imagesPerPage,
           imagesPerRow: imagesPerRow,
-          images: Array(imagesPerPage).fill(null)
+          images: Array(imagesPerPage).fill(null),
+          marginLeft: existingConfig?.marginLeft || marginLeft,
+          marginRight: existingConfig?.marginRight || marginRight,
+          marginBottom: existingConfig?.marginBottom || marginBottom,
+          marginHeader: existingConfig?.marginHeader || marginHeader,
+          centerHorizontally: existingConfig?.centerHorizontally ?? centerHorizontally,
+          imageAspectRatio: existingConfig?.imageAspectRatio || imageAspectRatio
         }
         
         // Get existing images if any
-        if (imagePagesConfig[pageNumber]) {
-          updatedPageConfig.images = [...imagePagesConfig[pageNumber].images]
+        if (existingConfig) {
+          updatedPageConfig.images = [...existingConfig.images]
         }
         
         // Set the new image
@@ -4108,10 +4144,10 @@ export default function ReportEditorPage() {
                 imagesPerPage={imagePagesConfig[currentPage].imagesPerPage}
                 imagesPerRow={imagePagesConfig[currentPage].imagesPerRow}
                 images={imagePagesConfig[currentPage].images}
-                marginLeft={marginLeft}
-                marginRight={marginRight}
-                marginBottom={marginBottom}
-                marginHeader={marginHeader}
+                marginLeft={imagePagesConfig[currentPage].marginLeft || marginLeft}
+                marginRight={imagePagesConfig[currentPage].marginRight || marginRight}
+                marginBottom={imagePagesConfig[currentPage].marginBottom || marginBottom}
+                marginHeader={imagePagesConfig[currentPage].marginHeader || marginHeader}
                 aspectRatio={imagePagesConfig[currentPage].imageAspectRatio || imageAspectRatio}
                 centerHorizontally={imagePagesConfig[currentPage].centerHorizontally ?? centerHorizontally}
                 onImageChange={(slotIndex, imageData) => {
@@ -4601,10 +4637,9 @@ export default function ReportEditorPage() {
                     min="5"
                     max="50"
                     step="1"
-                    value={marginLeft}
+                    value={dialogMarginLeft}
                     onChange={(e) => {
-                      setMarginLeft(Number(e.target.value))
-                      setTimeout(() => saveImageSettings(), 100)
+                      setDialogMarginLeft(Number(e.target.value))
                     }}
                     className="bg-slate-700 border-slate-600 text-white"
                   />
@@ -4619,10 +4654,9 @@ export default function ReportEditorPage() {
                     min="5"
                     max="50"
                     step="1"
-                    value={marginRight}
+                    value={dialogMarginRight}
                     onChange={(e) => {
-                      setMarginRight(Number(e.target.value))
-                      setTimeout(() => saveImageSettings(), 100)
+                      setDialogMarginRight(Number(e.target.value))
                     }}
                     className="bg-slate-700 border-slate-600 text-white"
                   />
@@ -4637,10 +4671,9 @@ export default function ReportEditorPage() {
                     min="5"
                     max="50"
                     step="1"
-                    value={marginBottom}
+                    value={dialogMarginBottom}
                     onChange={(e) => {
-                      setMarginBottom(Number(e.target.value))
-                      setTimeout(() => saveImageSettings(), 100)
+                      setDialogMarginBottom(Number(e.target.value))
                     }}
                     className="bg-slate-700 border-slate-600 text-white"
                   />
@@ -4655,10 +4688,9 @@ export default function ReportEditorPage() {
                     min="20"
                     max="100"
                     step="1"
-                    value={marginHeader}
+                    value={dialogMarginHeader}
                     onChange={(e) => {
-                      setMarginHeader(Number(e.target.value))
-                      setTimeout(() => saveImageSettings(), 100)
+                      setDialogMarginHeader(Number(e.target.value))
                     }}
                     className="bg-slate-700 border-slate-600 text-white"
                   />
