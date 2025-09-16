@@ -17,6 +17,8 @@ export interface GridCalculationInput {
   marginHeader?: number    // mm - Khoảng cách từ đỉnh giấy đến khung ảnh (mặc định 45mm)
   // THÊM: Tỷ lệ ảnh
   aspectRatio?: string     // Tỷ lệ ảnh (mặc định "4:3")
+  // THÊM: Căn giữa theo chiều ngang
+  centerHorizontally?: boolean // Căn giữa khung ảnh theo chiều ngang (mặc định false)
 }
 
 export interface GridCalculationResult {
@@ -98,12 +100,16 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
     marginBottom = 10,
     marginHeader = 45,
     // THÊM: Aspect ratio với giá trị mặc định
-    aspectRatio = "4:3"
+    aspectRatio = "4:3",
+    // THÊM: Center horizontally với giá trị mặc định
+    centerHorizontally = false
   } = input
   
   // Parse aspect ratio
   const { widthRatio, heightRatio } = parseAspectRatio(aspectRatio)
   const desiredAspectRatio = getAspectRatioValue(aspectRatio)
+  
+  console.log(`🎯 GRID CALCULATOR: centerHorizontally = ${centerHorizontally}`)
   
   // Initialize result với margin info và aspect ratio info
   const result: GridCalculationResult = {
@@ -337,6 +343,37 @@ export function calculateGridLayout(input: GridCalculationInput): GridCalculatio
   
   if (rows === 1 && imagesPerPage < imagesPerRow) {
     result.warnings.push(`Chỉ sử dụng ${imagesPerPage}/${imagesPerRow} khung trong hàng. Có thể tối ưu layout.`)
+  }
+  
+  // THÊM: Logic căn giữa theo chiều ngang
+  if (centerHorizontally) {
+    const actualGridWidth = totalGridWidth
+    const totalAvailableWidth = A4_CONSTANTS.PAPER_WIDTH
+    const usedWidth = actualGridWidth + marginLeft + marginRight
+    const remainingWidth = totalAvailableWidth - usedWidth
+    
+    if (remainingWidth > 0) {
+      // Tính margin left và right mới để căn giữa
+      const newMarginLeft = marginLeft + (remainingWidth / 2)
+      const newMarginRight = marginRight + (remainingWidth / 2)
+      
+      // Cập nhật margins trong result
+      result.margins.left = Math.floor(newMarginLeft)
+      result.margins.right = Math.floor(newMarginRight)
+      
+      console.log(`🎯 CENTER HORIZONTALLY:`)
+      console.log(`   - Grid width: ${actualGridWidth}mm`)
+      console.log(`   - Total paper width: ${totalAvailableWidth}mm`)
+      console.log(`   - Used width: ${usedWidth}mm`)
+      console.log(`   - Remaining width: ${remainingWidth}mm`)
+      console.log(`   - Original margins: L=${marginLeft}mm, R=${marginRight}mm`)
+      console.log(`   - New margins: L=${result.margins.left}mm, R=${result.margins.right}mm`)
+      
+      result.warnings.push(`🎯 Căn giữa: Margin trái/phải được điều chỉnh thành ${result.margins.left}mm/${result.margins.right}mm`)
+    } else {
+      console.log(`🎯 CENTER HORIZONTALLY: Không thể căn giữa - grid đã chiếm hết không gian`)
+      result.warnings.push(`⚠️ Không thể căn giữa - khung ảnh đã chiếm hết không gian theo chiều ngang`)
+    }
   }
   
   return result

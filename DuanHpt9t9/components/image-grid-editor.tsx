@@ -23,6 +23,8 @@ interface ImageGridEditorProps {
   marginHeader?: number
   // THÊM: Aspect ratio prop
   aspectRatio?: string
+  // THÊM: Center horizontally prop
+  centerHorizontally?: boolean
 }
 
 export default function ImageGridEditor({
@@ -41,7 +43,9 @@ export default function ImageGridEditor({
   marginBottom = 10,
   marginHeader = 45,
   // NHẬN ASPECT RATIO PROP
-  aspectRatio = "4:3"
+  aspectRatio = "4:3",
+  // NHẬN CENTER HORIZONTALLY PROP
+  centerHorizontally = false
 }: ImageGridEditorProps) {
   const { toast } = useToast()
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
@@ -53,7 +57,7 @@ export default function ImageGridEditor({
   const [isEditingMain, setIsEditingMain] = useState(false)
   const [isEditingSub, setIsEditingSub] = useState(false)
 
-  // TÍNH TOÁN VỚI MARGIN TÙY CHỈNH
+  // TÍNH TOÁN VỚI MARGIN TÙY CHỈNH VÀ CENTER HORIZONTALLY
   const gridCalculation = calculateGridLayout({
     imagesPerPage,
     imagesPerRow,
@@ -61,7 +65,8 @@ export default function ImageGridEditor({
     marginRight,
     marginBottom,
     marginHeader,
-    aspectRatio
+    aspectRatio,
+    centerHorizontally
   })
 
   // Extract calculated values
@@ -73,8 +78,13 @@ export default function ImageGridEditor({
     totalGridHeight,
     isValid,
     warnings,
-    errors
+    errors,
+    margins: calculatedMargins
   } = gridCalculation
+  
+  // Sử dụng margins từ calculation (có thể đã được điều chỉnh để căn giữa)
+  const effectiveMarginLeft = calculatedMargins.left
+  const effectiveMarginRight = calculatedMargins.right
 
   const gapSize = 5 // mm
   const availableWidth = 180 // mm - conservative
@@ -389,7 +399,7 @@ export default function ImageGridEditor({
         display: 'flex', 
         flexDirection: 'column', 
         justifyContent: 'center',
-        padding: `10mm ${marginRight}mm 5mm ${marginLeft}mm`,
+        padding: `10mm ${effectiveMarginRight}mm 5mm ${effectiveMarginLeft}mm`,
         boxSizing: 'border-box'
       }}>
         {/* Main Title - Có thể chỉnh sửa */}
@@ -443,7 +453,10 @@ export default function ImageGridEditor({
             {gridCalculation.aspectRatio.isExact ? ' ✅' : ' ⚠️'}
           </div>
           <div className="text-gray-600 mb-1">
-            📏 Margin: L={marginLeft}mm, R={marginRight}mm, T={marginHeader}mm, B={marginBottom}mm
+            📏 Margin: L={effectiveMarginLeft}mm, R={effectiveMarginRight}mm, T={marginHeader}mm, B={marginBottom}mm
+            {centerHorizontally && effectiveMarginLeft !== marginLeft && (
+              <span className="text-cyan-600 ml-2">🎯 Đã căn giữa</span>
+            )}
           </div>
           {warnings.length > 0 && (
             <div className="text-yellow-600">
@@ -461,7 +474,7 @@ export default function ImageGridEditor({
         display: 'flex', 
         alignItems: 'flex-start', 
         justifyContent: 'flex-start', // Changed from 'center' to respect margins
-        padding: `0 ${marginRight}mm ${marginBottom}mm ${marginLeft}mm`,
+        padding: `0 ${effectiveMarginRight}mm ${marginBottom}mm ${effectiveMarginLeft}mm`,
         boxSizing: 'border-box',
         overflow: 'hidden' // QUAN TRỌNG: Ngăn tràn
       }}>

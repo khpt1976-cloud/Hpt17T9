@@ -140,6 +140,9 @@ export default function ReportEditorPage() {
   // THÊM: Tỷ lệ ảnh
   const [imageAspectRatio, setImageAspectRatio] = useState("4:3") // Tỷ lệ ảnh mặc định
   
+  // THÊM: Checkbox căn giữa theo chiều ngang
+  const [centerHorizontally, setCenterHorizontally] = useState(false)
+  
   // Template states - KHÔI PHỤC
   const [existingDiaries, setExistingDiaries] = useState<any[]>([])
   const [selectedDiaryId, setSelectedDiaryId] = useState("")
@@ -613,6 +616,8 @@ export default function ReportEditorPage() {
         setMarginHeader(settings.marginHeader || 45)
         // THÊM: Load aspect ratio setting
         setImageAspectRatio(settings.imageAspectRatio || "4:3")
+        // THÊM: Load center horizontally setting
+        setCenterHorizontally(settings.centerHorizontally || false)
       } catch (error) {
         console.error("[v0] Error loading default settings:", error)
       }
@@ -1749,7 +1754,8 @@ export default function ReportEditorPage() {
         marginRight,
         marginBottom,
         marginHeader,
-        aspectRatio: imageAspectRatio
+        aspectRatio: imageAspectRatio,
+        centerHorizontally
       })
       
       if (!calculation.isValid || calculation.errors.length > 0) {
@@ -1797,7 +1803,8 @@ export default function ReportEditorPage() {
         marginRight,
         marginBottom,
         marginHeader,
-        imageAspectRatio
+        imageAspectRatio,
+        centerHorizontally
       }))
     }
 
@@ -3988,6 +3995,7 @@ export default function ReportEditorPage() {
                 marginBottom={marginBottom}
                 marginHeader={marginHeader}
                 aspectRatio={imageAspectRatio}
+                centerHorizontally={centerHorizontally}
                 onImageChange={(slotIndex, imageData) => {
                   console.log(`🖼️ Image changed: page ${currentPage}, slot ${slotIndex}`)
                   
@@ -4528,6 +4536,26 @@ export default function ReportEditorPage() {
               <p className="text-xs text-slate-400">
                 💡 Margin header: Khoảng cách từ đỉnh giấy đến khung ảnh đầu tiên
               </p>
+              
+              {/* THÊM: Checkbox căn giữa theo chiều ngang */}
+              <div className="flex items-center space-x-2 pt-2 border-t border-slate-600">
+                <input
+                  type="checkbox"
+                  id="center-horizontally"
+                  checked={centerHorizontally}
+                  onChange={(e) => {
+                    console.log('🎯 CENTER CHECKBOX CHANGED:', e.target.checked)
+                    setCenterHorizontally(e.target.checked)
+                  }}
+                  className="w-4 h-4 text-cyan-400 bg-slate-700 border-slate-600 rounded focus:ring-cyan-400 focus:ring-2"
+                />
+                <Label htmlFor="center-horizontally" className="text-sm font-medium text-cyan-400">
+                  🎯 Luôn căn giữa theo chiều ngang
+                </Label>
+              </div>
+              <p className="text-xs text-slate-400 ml-6">
+                ✅ Khung ảnh sẽ căn giữa, 2 bên thừa khoảng trống bằng nhau
+              </p>
             </div>
 
             {/* KHỐI 3: Image Pages Configuration */}
@@ -4612,7 +4640,8 @@ export default function ReportEditorPage() {
                             marginRight,
                             marginBottom,
                             marginHeader,
-                            aspectRatio: imageAspectRatio
+                            aspectRatio: imageAspectRatio,
+                            centerHorizontally
                           })
                           
                           // Hiển thị lỗi nếu có
@@ -4664,7 +4693,8 @@ export default function ReportEditorPage() {
                         marginRight,
                         marginBottom,
                         marginHeader,
-                        aspectRatio: imageAspectRatio
+                        aspectRatio: imageAspectRatio,
+                        centerHorizontally
                       })
                       
                       // Chỉ cập nhật state khi hợp lệ
