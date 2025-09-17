@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # DuanHpt11T9 - Construction Management System
 
 ## 🚀 Tổng quan
@@ -127,3 +128,6 @@ This project is licensed under the MIT License.
 ---
 
 **Made with ❤️ by HPT Team**
+=======
+# Hpt17T9
+>>>>>>> 5147b15e50b179be6d4d621ef75b28bb4a2f0231
