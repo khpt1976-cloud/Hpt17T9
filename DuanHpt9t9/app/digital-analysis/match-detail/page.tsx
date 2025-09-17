@@ -1,51 +1,56 @@
 'use client'
 
+import { Suspense } from 'react' // <-- THÊM DÒNG NÀY
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
-// Mock match data
-const mockMatches = {
-  "1": {
-    id: "1",
-    homeTeam: "Manchester United",
-    awayTeam: "Liverpool", 
-    homeLogo: "🔴",
-    awayLogo: "🔴",
-    time: "22:00",
-    date: "2024-01-15",
-    league: "Premier League",
-    status: "Chưa đá"
-  },
-  "2": {
-    id: "2", 
-    homeTeam: "Barcelona",
-    awayTeam: "Real Madrid",
-    homeLogo: "🔵",
-    awayLogo: "⚪",
-    time: "21:00",
-    date: "2024-01-15", 
-    league: "La Liga",
-    status: "Live",
-    score: "1-1"
-  },
-  "3": {
-    id: "3",
-    homeTeam: "Bayern Munich", 
-    awayTeam: "Dortmund",
-    homeLogo: "🔴",
-    awayLogo: "🟡",
-    time: "20:30",
-    date: "2024-01-15",
-    league: "Bundesliga", 
-    status: "FT",
-    score: "2-1"
-  }
-}
-
-export default function MatchDetailPage() {
+// ===================================================================
+// TOÀN BỘ LOGIC CỦA TRANG ĐƯỢC ĐƯA VÀO COMPONENT CON NÀY
+// ===================================================================
+function MatchDetailContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const matchId = searchParams.get('id') || '1'
+  
+  // Mock match data
+  const mockMatches = {
+    "1": {
+      id: "1",
+      homeTeam: "Manchester United",
+      awayTeam: "Liverpool", 
+      homeLogo: "🔴",
+      awayLogo: "🔴",
+      time: "22:00",
+      date: "2024-01-15",
+      league: "Premier League",
+      status: "Chưa đá"
+    },
+    "2": {
+      id: "2", 
+      homeTeam: "Barcelona",
+      awayTeam: "Real Madrid",
+      homeLogo: "🔵",
+      awayLogo: "⚪",
+      time: "21:00",
+      date: "2024-01-15", 
+      league: "La Liga",
+      status: "Live",
+      score: "1-1"
+    },
+    "3": {
+      id: "3",
+      homeTeam: "Bayern Munich", 
+      awayTeam: "Dortmund",
+      homeLogo: "🔴",
+      awayLogo: "🟡",
+      time: "20:30",
+      date: "2024-01-15",
+      league: "Bundesliga", 
+      status: "FT",
+      score: "2-1"
+    }
+  }
+
   const matchData = mockMatches[matchId as keyof typeof mockMatches] || mockMatches["1"]
   
   const [currentTime, setCurrentTime] = useState(0)
@@ -431,73 +436,4 @@ export default function MatchDetailPage() {
             title="Tua tới 10s"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-            </svg>
-          </button>
-          
-          {/* Speed Settings Button */}
-          <div className="relative speed-menu-container">
-            <button 
-              onClick={toggleSpeedMenu}
-              className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 transition-colors relative"
-              title={`Cài đặt tốc độ (${playbackSpeed}x)`}
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M11.49 3.17c-.38-1.56-2.6-1.56-2.98 0a1.532 1.532 0 01-2.286.948c-1.372-.836-2.942.734-2.106 2.106.54.886.061 2.042-.947 2.287-1.561.379-1.561 2.6 0 2.978a1.532 1.532 0 01.947 2.287c-.836 1.372.734 2.942 2.106 2.106a1.532 1.532 0 012.287.947c.379 1.561 2.6 1.561 2.978 0a1.533 1.533 0 012.287-.947c1.372.836 2.942-.734 2.106-2.106a1.533 1.533 0 01.947-2.287c1.561-.379 1.561-2.6 0-2.978a1.532 1.532 0 01-.947-2.287c.836-1.372-.734-2.942-2.106-2.106a1.532 1.532 0 01-2.287-.947zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-              </svg>
-              {showSpeedMenu && (
-                <span className="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
-                  {playbackSpeed}x
-                </span>
-              )}
-            </button>
-          </div>
-          
-          {/* Speed Menu - Rendered separately */}
-          {showSpeedMenu && (
-            <div 
-              className="fixed inset-0 z-40"
-              onClick={() => setShowSpeedMenu(false)}
-            >
-              <div 
-                className="absolute bottom-20 left-1/2 transform -translate-x-1/2 bg-slate-900 rounded-lg shadow-lg border border-slate-600 py-2 min-w-[120px] z-50"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="px-3 py-1 text-xs text-slate-400 border-b border-slate-600 mb-1">Tốc độ phát</div>
-                {[0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2].map((speed) => (
-                  <button
-                    key={speed}
-                    onClick={() => handleSpeedSelect(speed)}
-                    className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-700 transition-colors ${
-                      playbackSpeed === speed ? 'text-blue-400 bg-slate-700' : 'text-white'
-                    }`}
-                  >
-                    {speed}x
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-        
-        <div className="flex items-center justify-between text-sm">
-          <span>{formatTime(currentTime)}</span>
-          <div className="flex-1 mx-4 relative">
-            <input
-              type="range"
-              min="0"
-              max={duration}
-              value={currentTime}
-              onChange={handleSliderChange}
-              className="w-full h-2 bg-slate-700 rounded-full appearance-none cursor-pointer slider"
-              style={{
-                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${(currentTime / duration) * 100}%, #475569 ${(currentTime / duration) * 100}%, #475569 100%)`
-              }}
-            />
-          </div>
-          <span>{formatTime(duration)}</span>
-        </div>
-      </div>
-    </div>
-  )
-}
+              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.4
